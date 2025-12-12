@@ -23,6 +23,7 @@
 
 #include "AP_GPS_MAV.h"
 #include <stdint.h>
+#include <GCS_MAVLink/GCS.h>
 
 // Reading does nothing in this class; we simply return whether or not
 // the latest reading has been consumed.  By calling this function we assume
@@ -46,6 +47,8 @@ void AP_GPS_MAV::handle_msg(const mavlink_message_t &msg)
         case MAVLINK_MSG_ID_GPS_INPUT: {
             mavlink_gps_input_t packet;
             mavlink_msg_gps_input_decode(&msg, &packet);
+
+            gcs().send_text(MAV_SEVERITY_NOTICE, "state.instance=%d, packet.gps_id=%d", state.instance, packet.gps_id);
 
             // check if target instance belongs to incoming gps data.
             if (state.instance != packet.gps_id) {
@@ -142,6 +145,9 @@ void AP_GPS_MAV::handle_msg(const mavlink_message_t &msg)
             state.num_sats = packet.satellites_visible;
             state.last_gps_time_ms = now_ms;
             _new_data = true;
+
+            gcs().send_text(MAV_SEVERITY_NOTICE, "GPS_INPUT message received");
+
             break;
             }
 

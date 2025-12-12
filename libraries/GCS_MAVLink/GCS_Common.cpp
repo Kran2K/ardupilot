@@ -67,6 +67,7 @@
 #include <AP_KDECAN/AP_KDECAN.h>
 #include <AP_LandingGear/AP_LandingGear.h>
 #include <AP_Landing/AP_Landing_config.h>
+#include <AP_HIL/AP_HIL.h>
 
 #include "MissionItemProtocol_Waypoints.h"
 #include "MissionItemProtocol_Rally.h"
@@ -4495,6 +4496,26 @@ void GCS_MAVLINK::handle_message(const mavlink_message_t &msg)
         break;
     }
 #endif
+
+// Tandem SILS
+    case MAVLINK_MSG_ID_HIL_SENSOR:
+    {
+        gcs().send_text(MAV_SEVERITY_INFO, "HIL SENSOR message received");
+        // handle
+
+        AP_HIL *hil = AP::hil();
+        hil->handle_hil_sensor(msg);
+
+        break;
+    }
+
+    case MAVLINK_MSG_ID_HIL_STATE_QUATERNION:
+    {
+        gcs().send_text(MAV_SEVERITY_INFO, "HIL STATE QUATERNION message received");
+        // handle
+        break;
+    }
+
     }
 
 }

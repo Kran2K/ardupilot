@@ -40,6 +40,7 @@ COMMON_VEHICLE_DEPENDENT_LIBRARIES = [
     'AP_Declination',
     'AP_GPS',
     'AP_GSOF',
+    'AP_HIL',
     'AP_HAL',
     'AP_HAL_Empty',
     'AP_InertialSensor',
