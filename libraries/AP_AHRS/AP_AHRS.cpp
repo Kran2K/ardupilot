@@ -3644,38 +3644,48 @@ void AP_AHRS::update_HIL_override(void)
 
     // 자세
     Quaternion h_quat;
-    if (hil->get_hil_quat(h_quat)) {
+    if (hil->get_hil_nav_quat(h_quat)) {
         state.quat = h_quat;
         state.quat_ok = true;
 
         // quat 뿐만 아니라 오일러 각도도 업데이트 해야 함
         h_quat.to_euler(roll, pitch, yaw);
+
+        // secondary EKF
+        state.secondary_quat = h_quat;
+        state.secondary_quat_ok = true;
+        state.secondary_attitude = Vector3f(roll, pitch, yaw); 
+        state.secondary_attitude_ok = true;
     }
 
     // 위치
     Location h_loc;
-    if (hil->get_hil_location(h_loc)) {
+    if (hil->get_hil_nav_location(h_loc)) {
         state.location = h_loc;
         state.location_ok = true;
+
+        // secondary EKF
+        state.secondary_pos = state.location;
+        state.secondary_pos_ok = true;
     }
 
     // 속도
     Vector3f h_vel;
-    if (hil->get_hil_vel(h_vel)) {
+    if (hil->get_hil_nav_vel(h_vel)) {
         state.velocity_NED = h_vel;
         state.velocity_NED_ok = true;
     }
 
     // 자이로
     Vector3f h_gyro;
-    if (hil->get_hil_gyro(h_gyro)) {
+    if (hil->get_hil_nav_gyro(h_gyro)) {
         state.gyro_estimate = h_gyro;
         state.gyro_drift.zero();
     }
 
     // 가속도
     Vector3f h_accel;
-    if (hil->get_hil_accel(h_accel)) {
+    if (hil->get_hil_nav_accel(h_accel)) {
         if (state.quat_ok) { // 쿼터니언이 있어야 회전 변환 가능
             // 가속도 Body Frame -> Earth Frame(ef)으로 변환 
             state.accel_ef = state.quat * h_accel;
@@ -3689,12 +3699,9 @@ void AP_AHRS::update_HIL_override(void)
 
     // 대기속도
     float h_airspeed;
-    if (hil->get_hil_airspeed(h_airspeed)) {
+    if (hil->get_hil_nav_airspeed(h_airspeed)) {
         state.airspeed = h_airspeed;
         state.airspeed_ok = true;
-        
-        // EAS2TAS 비율이 기존 로직에선 어떻게 계산되는지 확인 필요
-        //state.EAS2TAS = 1.0f; 
     }
 }
 

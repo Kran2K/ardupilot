@@ -25,12 +25,19 @@ public:
     void set_enabled(bool enable) { _is_enabled = enable; }
 
     // AP_AHRS가 데이터를 빼가는 함수
-    bool get_hil_quat(Quaternion& out_quat) const;
-    bool get_hil_location(Location& out_loc) const;
-    bool get_hil_vel(Vector3f& out_vel) const;
-    bool get_hil_gyro(Vector3f& out_gyro) const;
-    bool get_hil_accel(Vector3f& out_accel) const;
-    bool get_hil_airspeed(float& out_airspeed) const;
+    bool get_hil_nav_quat(Quaternion& out_quat) const;
+    bool get_hil_nav_location(Location& out_loc) const;
+    bool get_hil_nav_vel(Vector3f& out_vel) const;
+    bool get_hil_nav_gyro(Vector3f& out_gyro) const;
+    bool get_hil_nav_accel(Vector3f& out_accel) const;
+    bool get_hil_nav_airspeed(float& out_airspeed) const;
+
+    // 센서가 데이터를 빼가는 함수
+    bool get_hil_sensor_gyro(Vector3f& out_gyro) const;
+    bool get_hil_sensor_accel(Vector3f& out_accel) const;
+    bool get_hil_sensor_mag(Vector3f& out_mag) const;
+    bool get_hil_sensor_baro(float& out_pressure, float& out_temp) const;
+    bool get_hil_sensor_diff_pressure(float& out_diff_press) const;
 
 private:
     static AP_HIL *_singleton;
@@ -46,7 +53,17 @@ private:
         Vector3f gyro;
         Vector3f accel;
         float airspeed;
-    } _state;
+    } _nav_state;
+
+    struct SensorState {
+        uint32_t last_update_ms;
+        Vector3f gyro;          // [rad/s] Raw Gyro
+        Vector3f accel;         // [m/s^2] Raw Accel
+        Vector3f mag;           // [mGauss] Raw Magnetometer
+        float baro_pressure;    // [Pa] Absolute Pressure
+        float baro_temp;        // [degC] Temperature
+        float diff_pressure;    // [Pa] Differential Pressure (for Airspeed Sensor)
+    } _sensor_state;
 };
 
 namespace AP {
