@@ -2,32 +2,51 @@
 
 #include <AP_HAL/AP_HAL.h>
 #include <GCS_MAVLink/GCS_MAVLink.h>
-#include <AP_Common/AP_Common.h>
-#include <AP_Param/AP_Param.h>
+#include <AP_Math/AP_Math.h>
+#include <AP_Common/Location.h>
+#include <AP_HAL/Semaphores.h>
 
 class AP_HIL {
 public:
-    AP_HIL();
-
-    static AP_HIL *get_singleton() {
+    static AP_HIL* get_singleton() {
         return _singleton;
     }
 
+    AP_HIL();
+    
     void init();
-
-    // handle HIL_SENSOR Mavlink message
+    
+    // MAVLink 핸들러
     void handle_hil_sensor(const mavlink_message_t &msg);
-
-    // handle HIL_STATE_QUATERNION Mavlink message
     void handle_hil_state_quaternion(const mavlink_message_t &msg);
 
-    // check if HIL is enabled
-    bool is_enabled() const { return _enabled; }
+    // 활성화 여부 확인
+    bool is_enabled() const { return _is_enabled; }
+    void set_enabled(bool enable) { _is_enabled = enable; }
+
+    // AP_AHRS가 데이터를 빼가는 함수
+    bool get_hil_quat(Quaternion& out_quat) const;
+    bool get_hil_location(Location& out_loc) const;
+    bool get_hil_vel(Vector3f& out_vel) const;
+    bool get_hil_gyro(Vector3f& out_gyro) const;
+    bool get_hil_accel(Vector3f& out_accel) const;
+    bool get_hil_airspeed(float& out_airspeed) const;
 
 private:
     static AP_HIL *_singleton;
+    bool _is_enabled = true;
 
-    AP_Int8 _enabled;
+    mutable HAL_Semaphore _sem;
+    
+    struct {
+        uint32_t last_update_ms;
+        Quaternion quat;
+        Location loc;
+        Vector3f vel;
+        Vector3f gyro;
+        Vector3f accel;
+        float airspeed;
+    } _state;
 };
 
 namespace AP {

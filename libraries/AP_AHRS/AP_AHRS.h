@@ -950,6 +950,9 @@ private:
     // primary is not good enough.
     EKFType fallback_active_EKF_type(void) const;
 
+    // Tandem : 외부 항법해 주입
+    void update_HIL_override(void);
+
     /*
       state updated at the end of each update() call
      */

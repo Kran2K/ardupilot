@@ -4500,9 +4500,6 @@ void GCS_MAVLINK::handle_message(const mavlink_message_t &msg)
 // Tandem SILS
     case MAVLINK_MSG_ID_HIL_SENSOR:
     {
-        gcs().send_text(MAV_SEVERITY_INFO, "HIL SENSOR message received");
-        // handle
-
         AP_HIL *hil = AP::hil();
         hil->handle_hil_sensor(msg);
 
@@ -4511,8 +4508,8 @@ void GCS_MAVLINK::handle_message(const mavlink_message_t &msg)
 
     case MAVLINK_MSG_ID_HIL_STATE_QUATERNION:
     {
-        gcs().send_text(MAV_SEVERITY_INFO, "HIL STATE QUATERNION message received");
-        // handle
+        AP_HIL *hil = AP::hil();
+        hil->handle_hil_state_quaternion(msg);
         break;
     }
 

@@ -72,6 +72,7 @@
 #include <AP_OpticalFlow/AP_OpticalFlow.h>
 #include <AP_Winch/AP_Winch_config.h>
 #include <AP_SurfaceDistance/AP_SurfaceDistance.h>
+#include <AP_HIL/AP_HIL.h>                  // Tandem 외부 항법 주입 라이브러리
 
 // Configuration
 #include "defines.h"
@@ -231,6 +232,8 @@ public:
     Copter(void);
 
 private:
+
+    AP_HIL hil;                        // Tandem 외부 항법 주입 라이브러리
 
     // key aircraft parameters passed to multiple libraries
     AP_MultiCopter aparm;

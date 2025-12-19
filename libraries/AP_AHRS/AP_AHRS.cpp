@@ -43,6 +43,7 @@
 #include <SITL/SITL.h>
 #endif
 #include <AP_NavEKF3/AP_NavEKF3_feature.h>
+#include <AP_HIL/AP_HIL.h>
 
 #define ATTITUDE_CHECK_THRESH_ROLL_PITCH_RAD radians(10)
 #define ATTITUDE_CHECK_THRESH_YAW_RAD radians(20)
@@ -484,6 +485,8 @@ void AP_AHRS::update(bool skip_ins_update)
     // update published state
     update_state();
 
+    // Tandem : 외부 항법해 덮어쓰기
+    update_HIL_override();
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     /*
       add timing jitter to simulate slow EKF response
@@ -3629,6 +3632,70 @@ float AP_AHRS::get_air_density_ratio(void) const
 {
     const float eas2tas = get_EAS2TAS();
     return 1.0 / sq(eas2tas);
+}
+
+void AP_AHRS::update_HIL_override(void)
+{
+    AP_HIL *hil = AP::hil();
+    
+    if (!hil) {
+        return;
+    }
+
+    // 자세
+    Quaternion h_quat;
+    if (hil->get_hil_quat(h_quat)) {
+        state.quat = h_quat;
+        state.quat_ok = true;
+
+        // quat 뿐만 아니라 오일러 각도도 업데이트 해야 함
+        h_quat.to_euler(roll, pitch, yaw);
+    }
+
+    // 위치
+    Location h_loc;
+    if (hil->get_hil_location(h_loc)) {
+        state.location = h_loc;
+        state.location_ok = true;
+    }
+
+    // 속도
+    Vector3f h_vel;
+    if (hil->get_hil_vel(h_vel)) {
+        state.velocity_NED = h_vel;
+        state.velocity_NED_ok = true;
+    }
+
+    // 자이로
+    Vector3f h_gyro;
+    if (hil->get_hil_gyro(h_gyro)) {
+        state.gyro_estimate = h_gyro;
+        state.gyro_drift.zero();
+    }
+
+    // 가속도
+    Vector3f h_accel;
+    if (hil->get_hil_accel(h_accel)) {
+        if (state.quat_ok) { // 쿼터니언이 있어야 회전 변환 가능
+            // 가속도 Body Frame -> Earth Frame(ef)으로 변환 
+            state.accel_ef = state.quat * h_accel;
+        } else {
+            // 이거 실행되면 망한거임
+            state.accel_ef = h_accel; 
+        }
+        
+        state.accel_bias.zero();
+    }
+
+    // 대기속도
+    float h_airspeed;
+    if (hil->get_hil_airspeed(h_airspeed)) {
+        state.airspeed = h_airspeed;
+        state.airspeed_ok = true;
+        
+        // EAS2TAS 비율이 기존 로직에선 어떻게 계산되는지 확인 필요
+        //state.EAS2TAS = 1.0f; 
+    }
 }
 
 // singleton instance
