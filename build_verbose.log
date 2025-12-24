@@ -1,0 +1,174 @@
+Waf: Entering directory `/home/hw/ardupilot/build/Pixhawk4'
+Checking for env.py
+env added OPTIMIZE=-O2
+env added ENABLE_DFU_BOOT=0
+env added WITH_FATFS=1
+env added PROCESS_STACK=0x1C00
+env added MAIN_STACK=0x600
+env added IOMCU_FW=0
+env added PERIPH_FW=0
+env added HAL_NUM_CAN_IFACES=2
+env added HAL_CANFD_SUPPORTED=0
+env added BOARD_FLASH_SIZE=2048
+env added EXT_FLASH_SIZE_MB=0
+env added INT_FLASH_PRIMARY=False
+env added ENABLE_CRASHDUMP=True
+env appended CPU_FLAGS=['-mcpu=cortex-m7', '-mfpu=fpv5-d16', '-mfloat-abi=hard', '-DARM_MATH_CM7', '-u_printf_float']
+env added CORTEX=cortex-m7
+env added APJ_BOARD_ID=50
+env added APJ_BOARD_TYPE=STM32F767xx
+env added USBID=0x1209/0x5740
+env added FLASH_RESERVE_START_KB=32
+env added EXT_FLASH_RESERVE_START_KB=0
+env added FLASH_TOTAL=2064384
+env added HAS_EXTERNAL_FLASH_SECTIONS=0
+env added CHIBIOS_BUILD_FLAGS=USE_FATFS=yes CHIBIOS_STARTUP_MK=os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f7xx.mk CHIBIOS_PLATFORM_MK=os/hal/ports/STM32/STM32F7xx/platform.mk MCU=cortex-m7 ENV_UDEFS=-DCHPRINTF_USE_FLOAT=1
+Embedding file bootloader.bin:/home/hw/ardupilot/Tools/bootloaders/Pixhawk4_bl.bin
+Embedding file defaults.parm:/home/hw/ardupilot/build/Pixhawk4/processed_defaults.parm
+Embedding file hwdef.dat:/home/hw/ardupilot/build/Pixhawk4/hw.dat
+Embedding file io_firmware.bin:Tools/IO_Firmware/iofirmware_lowpolh.bin
+Embedding file io_firmware_dshot.bin:Tools/IO_Firmware/iofirmware_dshot_lowpolh.bin
+16:19:49 runner ['/usr/bin/git', 'rev-parse', '--short=8', 'HEAD']
+16:19:49 runner ['/usr/bin/git', 'rev-parse', '--short=8', 'HEAD']
+16:19:49 runner ['/usr/bin/git', 'rev-parse', '--short=8', 'HEAD']
+16:19:50 runner ('/usr/bin/git', 'submodule', 'status', '--recursive', '--', '/home/hw/ardupilot/modules/ChibiOS')
+16:19:50 runner ('/usr/bin/git', 'submodule', 'status', '--recursive', '--', '/home/hw/ardupilot/modules/mavlink')
+[ 4/11] Creating build/Pixhawk4/modules/ChibiOS/include_dirs
+16:19:50 runner ' touch Makefile && BUILDDIR=modules/ChibiOS BUILDROOT=/home/hw/ardupilot/build/Pixhawk4 CRASHCATCHER=../../modules/CrashDebug/CrashCatcher CHIBIOS=../../modules/ChibiOS AP_HAL=../../libraries/AP_HAL_ChibiOS USE_FATFS=yes CHIBIOS_STARTUP_MK=os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f7xx.mk CHIBIOS_PLATFORM_MK=os/hal/ports/STM32/STM32F7xx/platform.mk MCU=cortex-m7 ENV_UDEFS=-DCHPRINTF_USE_FLOAT=1 USE_COPT=-O2 HAL_BOARD_NAME="Pixhawk4" /usr/bin/make pass -f \'/home/hw/ardupilot/libraries/AP_HAL_ChibiOS/hwdef/common/chibios_board.mk\' '
+[ 9/11] Creating build/Pixhawk4/chibios_flags.h
+16:19:50 runner ' echo // BUILD_FLAGS: modules/ChibiOS /home/hw/ardupilot/build/Pixhawk4 ../../modules/CrashDebug/CrashCatcher ../../modules/ChibiOS ../../libraries/AP_HAL_ChibiOS USE_FATFS=yes CHIBIOS_STARTUP_MK=os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f7xx.mk CHIBIOS_PLATFORM_MK=os/hal/ports/STM32/STM32F7xx/platform.mk MCU=cortex-m7 ENV_UDEFS=-DCHPRINTF_USE_FLOAT=1 USE_COPT=-O2 HAL_BOARD_NAME="Pixhawk4" HAL_MAX_STACK_FRAME_SIZE=1300 > chibios_flags.h '
+[11/11] Linking build/Pixhawk4/modules/ChibiOS/libch.a
+16:19:50 runner ' BUILDDIR=\'modules/ChibiOS\' BUILDROOT=\'/home/hw/ardupilot/build/Pixhawk4\' CRASHCATCHER=\'../../modules/CrashDebug/CrashCatcher\' CHIBIOS=\'../../modules/ChibiOS\' AP_HAL=../../libraries/AP_HAL_ChibiOS USE_FATFS=yes CHIBIOS_STARTUP_MK=os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f7xx.mk CHIBIOS_PLATFORM_MK=os/hal/ports/STM32/STM32F7xx/platform.mk MCU=cortex-m7 ENV_UDEFS=-DCHPRINTF_USE_FLOAT=1 USE_COPT=-O2 HAL_BOARD_NAME="Pixhawk4" HAL_MAX_STACK_FRAME_SIZE=1300 \'/usr/bin/make\' -j1 lib -f \'/home/hw/ardupilot/libraries/AP_HAL_ChibiOS/hwdef/common/chibios_board.mk\' '
+[1/115] ChibiOS: Compiling crt0_v7m.S
+[2/115] ChibiOS: Compiling vectors.S
+[3/115] ChibiOS: Compiling chcoreasm.S
+[4/115] ChibiOS: Compiling ff.c
+[5/115] ChibiOS: Compiling ffunicode.c
+[6/115] ChibiOS: Compiling chcore.c
+[7/115] ChibiOS: Compiling crt1.c
+[8/115] ChibiOS: Compiling bufstreams.c
+[9/115] ChibiOS: Compiling chprintf.c
+[10/115] ChibiOS: Compiling chscanf.c
+[11/115] ChibiOS: Compiling memstreams.c
+[12/115] ChibiOS: Compiling nullstreams.c
+[13/115] ChibiOS: Compiling osal.c
+[14/115] ChibiOS: Compiling hal_adc_lld.c
+[15/115] ChibiOS: Compiling hal_can_lld.c
+[16/115] ChibiOS: Compiling hal_crypto_lld.c
+[17/115] ChibiOS: Compiling hal_dac_lld.c
+[18/115] ChibiOS: Compiling stm32_dma.c
+[19/115] ChibiOS: Compiling stm32_exti.c
+[20/115] ChibiOS: Compiling hal_pal_lld.c
+[21/115] ChibiOS: Compiling hal_i2c_lld.c
+[22/115] ChibiOS: Compiling hal_mac_lld.c
+[23/115] ChibiOS: Compiling hal_usb_lld.c
+[24/115] ChibiOS: Compiling hal_wspi_lld.c
+[25/115] ChibiOS: Compiling hal_trng_lld.c
+[26/115] ChibiOS: Compiling hal_rtc_lld.c
+[27/115] ChibiOS: Compiling hal_sdc_lld.c
+[28/115] ChibiOS: Compiling hal_i2s_lld.c
+[29/115] ChibiOS: Compiling hal_spi_lld.c
+[30/115] ChibiOS: Compiling hal_st_lld.c
+[31/115] ChibiOS: Compiling hal_eicu_lld.c
+[32/115] ChibiOS: Compiling hal_gpt_lld.c
+[33/115] ChibiOS: Compiling hal_icu_lld.c
+[34/115] ChibiOS: Compiling hal_pwm_lld.c
+[35/115] ChibiOS: Compiling hal_serial_lld.c
+[36/115] ChibiOS: Compiling hal_sio_lld.c
+[37/115] ChibiOS: Compiling hal_uart_lld.c
+[38/115] ChibiOS: Compiling hal_wdg_lld.c
+[39/115] ChibiOS: Compiling hal_lld.c
+[40/115] ChibiOS: Compiling stm32_isr.c
+[41/115] ChibiOS: Compiling nvic.c
+[42/115] ChibiOS: Compiling hal.c
+[43/115] ChibiOS: Compiling hal_adc.c
+[44/115] ChibiOS: Compiling hal_buffers.c
+[45/115] ChibiOS: Compiling hal_can.c
+[46/115] ChibiOS: Compiling hal_crypto.c
+[47/115] ChibiOS: Compiling hal_dac.c
+[48/115] ChibiOS: Compiling hal_efl.c
+[49/115] ChibiOS: Compiling hal_eicu.c
+[50/115] ChibiOS: Compiling hal_flash.c
+[51/115] ChibiOS: Compiling hal_gpt.c
+[52/115] ChibiOS: Compiling hal_i2c.c
+[53/115] ChibiOS: Compiling hal_i2s.c
+[54/115] ChibiOS: Compiling hal_icu.c
+[55/115] ChibiOS: Compiling hal_mac.c
+[56/115] ChibiOS: Compiling hal_mmc_spi.c
+[57/115] ChibiOS: Compiling hal_mmcsd.c
+[58/115] ChibiOS: Compiling hal_pal.c
+[59/115] ChibiOS: Compiling hal_pwm.c
+[60/115] ChibiOS: Compiling hal_queues.c
+[61/115] ChibiOS: Compiling hal_rtc.c
+[62/115] ChibiOS: Compiling hal_sdc.c
+[63/115] ChibiOS: Compiling hal_serial.c
+[64/115] ChibiOS: Compiling hal_serial_usb.c
+[65/115] ChibiOS: Compiling hal_sio.c
+[66/115] ChibiOS: Compiling hal_spi.c
+[67/115] ChibiOS: Compiling hal_st.c
+[68/115] ChibiOS: Compiling hal_trng.c
+[69/115] ChibiOS: Compiling hal_uart.c
+[70/115] ChibiOS: Compiling hal_usb.c
+[71/115] ChibiOS: Compiling hal_wdg.c
+[72/115] ChibiOS: Compiling hal_wspi.c
+[73/115] ChibiOS: Compiling chdelegates.c
+[74/115] ChibiOS: Compiling chfactory.c
+[75/115] ChibiOS: Compiling chmboxes.c
+[76/115] ChibiOS: Compiling chmemcore.c
+[77/115] ChibiOS: Compiling chmemheaps.c
+[78/115] ChibiOS: Compiling chmempools.c
+[79/115] ChibiOS: Compiling chobjcaches.c
+[80/115] ChibiOS: Compiling chpipes.c
+[81/115] ChibiOS: Compiling chcond.c
+[82/115] ChibiOS: Compiling chdebug.c
+[83/115] ChibiOS: Compiling chdynamic.c
+[84/115] ChibiOS: Compiling chevents.c
+[85/115] ChibiOS: Compiling chinstances.c
+[86/115] ChibiOS: Compiling chmsg.c
+[87/115] ChibiOS: Compiling chmtx.c
+[88/115] ChibiOS: Compiling chregistry.c
+[89/115] ChibiOS: Compiling chrfcu.c
+[90/115] ChibiOS: Compiling chschd.c
+[91/115] ChibiOS: Compiling chsem.c
+[92/115] ChibiOS: Compiling chstats.c
+[93/115] ChibiOS: Compiling chsys.c
+[94/115] ChibiOS: Compiling chthreads.c
+[95/115] ChibiOS: Compiling chtm.c
+[96/115] ChibiOS: Compiling chtrace.c
+[97/115] ChibiOS: Compiling chvt.c
+[98/115] ChibiOS: Compiling fatfs_diskio.c
+[99/115] ChibiOS: Compiling fatfs_syscall.c
+[100/115] ChibiOS: Compiling syscalls.c
+[101/115] ChibiOS: Compiling stubs.c
+[102/115] ChibiOS: Compiling board.c
+[103/115] ChibiOS: Compiling usbcfg.c
+[104/115] ChibiOS: Compiling usbcfg_dualcdc.c
+[105/115] ChibiOS: Compiling usbcfg_common.c
+[106/115] ChibiOS: Compiling flash.c
+[107/115] ChibiOS: Compiling malloc.c
+[108/115] ChibiOS: Compiling hrt.c
+[109/115] ChibiOS: Compiling stm32_util.c
+[110/115] ChibiOS: Compiling bouncebuffer.c
+[111/115] ChibiOS: Compiling watchdog.c
+[112/115] ChibiOS: Compiling ch.cpp
+[113/115] ChibiOS: Compiling CrashCatcher_armv7m.S
+[114/115] ChibiOS: Compiling CrashCatcher.c
+[115/115] ChibiOS: Compiling crashdump.c
+
+ChibiOS: Done!
+
+CrashCatcher: Done!
+
+Calling ant_glob on build folders (/home/hw/ardupilot/build/Pixhawk4) is dangerous: add quiet=True / remove=False
+No target_list file found, creating
+Generating compile_commands.json
+Calling ant_glob on build folders (/home/hw/ardupilot/build/Pixhawk4) is dangerous: add quiet=True / remove=False
+Generating compile_commands.json
+Generating compile_commands.json
+Calling ant_glob on build folders (/home/hw/ardupilot/build/Pixhawk4) is dangerous: add quiet=True / remove=False
+Generating compile_commands.json
+Calling ant_glob on build folders (/home/hw/ardupilot/build/Pixhawk4) is dangerous: add quiet=True / remove=False
+Generating compile_commands.json
+Calling ant_glob on build folders (/home/hw/ardupilot/build/Pixhawk4) is dangerous: add quiet=True / remove=False
+Generating compile_commands.json
+Calling ant_glob on build folders (/home/hw/ardupilot/build/Pixhawk4) is dangerous: add quiet=True / remove=False

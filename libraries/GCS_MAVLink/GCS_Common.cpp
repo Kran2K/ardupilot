@@ -582,14 +582,29 @@ void GCS_MAVLINK::send_ahrs2()
     const AP_AHRS &ahrs = AP::ahrs();
     Vector3f euler;
     Location loc {};
-    // we want one or both of these, use | to avoid short-circuiting:
+    
+    // tandem-sils AHRS2에서도 HIL 고도 강제
+    float ahrs2_alt = 0;
     if (uint8_t(ahrs.get_secondary_attitude(euler)) |
         uint8_t(ahrs.get_secondary_position(loc))) {
+        // Force HIL altitude if enabled
+        AP_HIL *hil = AP::hil();
+        if (hil && hil->is_enabled()) {
+            Location hil_loc {};
+            if (hil->get_hil_nav_location(hil_loc)) {
+                ahrs2_alt = hil_loc.alt * 1.0e-2f;  // cm -> m
+            } else {
+                ahrs2_alt = loc.alt * 1.0e-2f;
+            }
+        } else {
+            ahrs2_alt = loc.alt * 1.0e-2f;
+        }
+        
         mavlink_msg_ahrs2_send(chan,
                                euler.x,
                                euler.y,
                                euler.z,
-                               loc.alt*1.0e-2f,
+                               ahrs2_alt,
                                loc.lat,
                                loc.lng);
     }
@@ -3354,6 +3369,15 @@ float GCS_MAVLINK::vfr_hud_airspeed() const
     }
 #endif
 
+#if AP_AHRS_ENABLED
+    // Try to get airspeed estimate from AHRS
+    // This includes: HIL airspeed, EKF3 synthetic airspeed, DCM synthetic airspeed
+    float ahrs_airspeed;
+    if (AP::ahrs().airspeed_estimate(ahrs_airspeed)) {
+        return ahrs_airspeed;
+    }
+#endif
+
 #if AP_GPS_ENABLED
     // because most vehicles don't have airspeed sensors, we return a
     // different sort of speed estimate in the relevant field for
@@ -3379,7 +3403,8 @@ float GCS_MAVLINK::vfr_hud_climbrate() const
 #if AP_AHRS_ENABLED
 float GCS_MAVLINK::vfr_hud_alt() const
 {
-    return global_position_current_loc.alt * 0.01f; // cm -> m
+    // tandem-sils: altitude 값을 global_position_int와 동일하게 처리
+    return global_position_int_alt() * 0.001f;  // mm -> m
 }
 
 void GCS_MAVLINK::send_vfr_hud()
@@ -5868,10 +5893,34 @@ void GCS_MAVLINK::send_attitude_quaternion() const
 }
 
 int32_t GCS_MAVLINK::global_position_int_alt() const {
+    // tandem-sils: HIL 고도 활성화되면, sensor-estimate altitude 무시
+    AP_HIL *hil = AP::hil();
+    if (hil && hil->is_enabled()) {
+        Location hil_loc {};
+        if (hil->get_hil_nav_location(hil_loc)) {
+            return hil_loc.alt * 10UL;  // cm -> mm, force HIL
+        }
+    }
+    
+    // Fallback to AHRS location (only when HIL is disabled)
+    Location ahrs_loc {};
+    if (AP::ahrs().get_location(ahrs_loc)) {
+        return ahrs_loc.alt * 10UL;  // cm -> mm
+    }
     return global_position_current_loc.alt * 10UL;
 }
 int32_t GCS_MAVLINK::global_position_int_relative_alt() const {
 #if AP_AHRS_ENABLED
+    // tandem-sils: relative-alt(상대고도)도 HIL값으로 강제 고정
+    AP_HIL *hil = AP::hil();
+    if (hil && hil->is_enabled()) {
+        Location hil_loc {};
+        if (hil->get_hil_nav_location(hil_loc)) {
+            return hil_loc.alt * 10UL;  // cm -> mm, same as altasl
+        }
+    }
+    
+    // Fallback to AHRS calculation (only when HIL is disabled)
     float posD;
     AP::ahrs().get_relative_position_D_home(posD);
     posD *= -1000.0f; // change from down to up and metres to millimeters

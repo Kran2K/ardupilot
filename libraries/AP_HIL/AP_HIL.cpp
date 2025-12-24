@@ -150,6 +150,17 @@ bool AP_HIL::get_hil_nav_airspeed(float& out_airspeed) const
     out_airspeed = _nav_state.airspeed;
     return true;
 }
+//raw alt my add
+// bool AP_HIL::get_hil_nav_altitude(int32_t& out_altitude) const
+// {
+//     if (!is_enabled()) {
+//         return false;
+//     }
+
+//     WITH_SEMAPHORE(_sem);
+//     out_altitude = _nav_state.loc.alt * 0.01f; // cm to m
+//     return true;
+// }
 
 // raw 자이로
 bool AP_HIL::get_hil_sensor_gyro(Vector3f& out_gyro) const

@@ -3540,6 +3540,10 @@ bool AP_AHRS::wind_estimate(Vector3f &wind) const
 // if we have an estimate
 bool AP_AHRS::airspeed_estimate(float &airspeed_ret) const
 {
+    if (_override_airspeed_valid) {
+    airspeed_ret = _override_airspeed;
+    return true;
+    }
     airspeed_ret = state.airspeed;
     return state.airspeed_ok;
 }
@@ -3700,6 +3704,7 @@ void AP_AHRS::update_HIL_override(void)
     // 대기속도
     float h_airspeed;
     if (hil->get_hil_nav_airspeed(h_airspeed)) {
+        // tandem-sils: airspeed
         state.airspeed = h_airspeed;
         state.airspeed_ok = true;
     }

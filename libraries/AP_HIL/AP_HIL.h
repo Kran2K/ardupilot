@@ -31,6 +31,7 @@ public:
     bool get_hil_nav_gyro(Vector3f& out_gyro) const;
     bool get_hil_nav_accel(Vector3f& out_accel) const;
     bool get_hil_nav_airspeed(float& out_airspeed) const;
+    bool get_hil_nav_altitude(int32_t& out_altitude) const; //my add
 
     // 센서가 데이터를 빼가는 함수
     bool get_hil_sensor_gyro(Vector3f& out_gyro) const;
@@ -42,7 +43,7 @@ public:
 private:
     static AP_HIL *_singleton;
     bool _is_enabled = true;
-
+    
     mutable HAL_Semaphore _sem;
     
     struct {
@@ -53,6 +54,7 @@ private:
         Vector3f gyro;
         Vector3f accel;
         float airspeed;
+        // int32_t altitude; //my add
     } _nav_state;
 
     struct SensorState {

@@ -683,6 +683,20 @@ public:
     // get access to an EKFGSF_yaw estimator
     const EKFGSF_yaw *get_yaw_estimator(void) const;
 
+//tandem_sils airspeed override 값 강제 사용
+private:
+    float _override_airspeed = 0.0f;
+    bool  _override_airspeed_valid = false;
+
+public:
+    void set_override_airspeed(float v_ms) {
+        _override_airspeed = v_ms;
+        _override_airspeed_valid = true;
+    }
+    void clear_override_airspeed() {
+        _override_airspeed_valid = false;
+    }
+
 private:
 
     // roll/pitch/yaw euler angles, all in radians
@@ -995,6 +1009,11 @@ private:
         bool origin_ok;
         Vector3f velocity_NED;
         bool velocity_NED_ok;
+        // Location altitude; // my add
+        // bool altitude_ok;
+        // Location secondary_altitude; // my add
+        // bool secondary_altitude_ok;
+
     } state;
 
     /*
