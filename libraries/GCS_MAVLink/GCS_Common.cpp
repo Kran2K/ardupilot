@@ -35,6 +35,7 @@
 #include <AP_RangeFinder/AP_RangeFinder.h>
 #include <AP_RangeFinder/AP_RangeFinder_Backend.h>
 #include <AP_Airspeed/AP_Airspeed.h>
+#include <AP_Airspeed/AP_Airspeed_HILS.h>
 #include <AP_Camera/AP_Camera.h>
 #include <AP_Gripper/AP_Gripper.h>
 #include <AC_Sprayer/AC_Sprayer.h>
@@ -583,22 +584,10 @@ void GCS_MAVLINK::send_ahrs2()
     Vector3f euler;
     Location loc {};
     
-    // tandem-sils AHRS2에서도 HIL 고도 강제
-    float ahrs2_alt = 0;
+    // tandem-sils: AHRS2에서도 HIL 고도 강제
     if (uint8_t(ahrs.get_secondary_attitude(euler)) |
         uint8_t(ahrs.get_secondary_position(loc))) {
-        // Force HIL altitude if enabled
-        AP_HIL *hil = AP::hil();
-        if (hil && hil->is_enabled()) {
-            Location hil_loc {};
-            if (hil->get_hil_nav_location(hil_loc)) {
-                ahrs2_alt = hil_loc.alt * 1.0e-2f;  // cm -> m
-            } else {
-                ahrs2_alt = loc.alt * 1.0e-2f;
-            }
-        } else {
-            ahrs2_alt = loc.alt * 1.0e-2f;
-        }
+        float ahrs2_alt = AP_Airspeed_HILS::get_ahrs2_alt();
         
         mavlink_msg_ahrs2_send(chan,
                                euler.x,
@@ -5894,37 +5883,12 @@ void GCS_MAVLINK::send_attitude_quaternion() const
 
 int32_t GCS_MAVLINK::global_position_int_alt() const {
     // tandem-sils: HIL 고도 활성화되면, sensor-estimate altitude 무시
-    AP_HIL *hil = AP::hil();
-    if (hil && hil->is_enabled()) {
-        Location hil_loc {};
-        if (hil->get_hil_nav_location(hil_loc)) {
-            return hil_loc.alt * 10UL;  // cm -> mm, force HIL
-        }
-    }
-    
-    // Fallback to AHRS location (only when HIL is disabled)
-    Location ahrs_loc {};
-    if (AP::ahrs().get_location(ahrs_loc)) {
-        return ahrs_loc.alt * 10UL;  // cm -> mm
-    }
-    return global_position_current_loc.alt * 10UL;
+    return AP_Airspeed_HILS::get_global_position_int_alt();
 }
 int32_t GCS_MAVLINK::global_position_int_relative_alt() const {
 #if AP_AHRS_ENABLED
     // tandem-sils: relative-alt(상대고도)도 HIL값으로 강제 고정
-    AP_HIL *hil = AP::hil();
-    if (hil && hil->is_enabled()) {
-        Location hil_loc {};
-        if (hil->get_hil_nav_location(hil_loc)) {
-            return hil_loc.alt * 10UL;  // cm -> mm, same as altasl
-        }
-    }
-    
-    // Fallback to AHRS calculation (only when HIL is disabled)
-    float posD;
-    AP::ahrs().get_relative_position_D_home(posD);
-    posD *= -1000.0f; // change from down to up and metres to millimeters
-    return posD;
+    return AP_Airspeed_HILS::get_global_position_int_relative_alt();
 #else
     return 0;
 #endif
@@ -5938,8 +5902,14 @@ void GCS_MAVLINK::send_global_position_int()
     UNUSED_RESULT(ahrs.get_location(global_position_current_loc)); // return value ignored; we send stale data
 
     Vector3f vel;
+    // tandem-sils: Use groundspeed from AHRS state to prevent 0 flicker
+    // AHRS state is updated in update_state() which uses HILS-first groundspeed
+    Vector2f gs_vec = ahrs.groundspeed_vector();
     if (!ahrs.get_velocity_NED(vel)) {
-        vel.zero();
+        // If velocity_NED unavailable, use groundspeed_vector for XY and zero for Z
+        vel.x = gs_vec.x;
+        vel.y = gs_vec.y;
+        vel.z = 0;
     }
 
     mavlink_msg_global_position_int_send(

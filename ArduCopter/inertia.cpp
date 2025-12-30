@@ -1,23 +1,14 @@
 #include "Copter.h"
+#include <AP_Airspeed/AP_Airspeed_HILS.h>
 
 // read_inertia - read inertia in from accelerometers
 void Copter::read_inertia()
 {
     // tandem-sils: HIL 활성화하면, 센서 기반 추정 고도 무시
-    AP_HIL *hil_ptr = AP::hil();
-    if (hil_ptr && hil_ptr->is_enabled()) {
-        // Use HIL data directly, don't update inertial_nav with sensor data
-        Location hil_loc {};
-        if (hil_ptr->get_hil_nav_location(hil_loc)) {
-            current_loc.lat = hil_loc.lat;
-            current_loc.lng = hil_loc.lng;
-            current_loc.set_alt_cm(hil_loc.alt, Location::AltFrame::ABOVE_ORIGIN);
-            if (!ahrs.home_is_set() || !current_loc.change_alt_frame(Location::AltFrame::ABOVE_HOME)) {
-                current_loc.set_alt_cm(hil_loc.alt, Location::AltFrame::ABOVE_HOME);
-            }
-
-            return;  // Skip all sensor-based updates
-        }
+    Location hil_loc {};
+    if (AP_Airspeed_HILS::get_hil_altitude_data(hil_loc)) {
+        current_loc = hil_loc;
+        return;
     }
     
     // Normal sensor-based estimation (only when HIL is disabled)

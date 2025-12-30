@@ -3,6 +3,7 @@
 #include "GCS_Mavlink.h"
 #include <AP_RPM/AP_RPM_config.h>
 #include <AP_EFI/AP_EFI_config.h>
+#include <AP_Airspeed/AP_Airspeed_HILS.h>
 
 MAV_TYPE GCS_Copter::frame_type() const
 {
@@ -237,10 +238,7 @@ float GCS_MAVLINK_Copter:: vfr_hud_airspeed() const
     Vector3f airspeed_vec_bf;
     if (AP::ahrs().airspeed_vector_true(airspeed_vec_bf)) {
         // tandem-sils: EKF3 wind estimation airspeed
-        // we are running the EKF3 wind estimation code which can give
-        // us an airspeed estimate
-        float val = airspeed_vec_bf.length();
-        return val;
+        return airspeed_vec_bf.length();
     }
 
     // If we couldn't get a vector-based estimate, ask AHRS for its
@@ -1546,29 +1544,24 @@ MAV_RESULT GCS_MAVLINK_Copter::handle_flight_termination(const mavlink_command_i
 float GCS_MAVLINK_Copter::vfr_hud_alt() const
 {
     // tandem-sils: vfr_hud_alt 무시하고 HIL 고도 강제 사용
-    AP_HIL *hil_ptr = AP::hil();
-    if (hil_ptr && hil_ptr->is_enabled()) {
-        Location hil_loc {};
-        if (hil_ptr->get_hil_nav_location(hil_loc)) {
-            float hil_alt_m = hil_loc.alt * 0.01f;  // cm -> m, force HIL
-            gcs().send_text(MAV_SEVERITY_DEBUG, "vfr_hud_alt from HIL: %.2f m", (double)hil_alt_m);
-            return hil_alt_m;
-        }
+    float hil_alt = AP_Airspeed_HILS::get_vfr_hud_alt_with_hil(
+        copter.g2.dev_options.get() & DevOptionVFR_HUDRelativeAlt,
+        copter.current_loc.alt * AP_Airspeed_HILS::CM_TO_M
+    );
+    
+    if (hil_alt > 0.0f) {
+        return hil_alt;
     }
     
     // Fallback to compatibility option or base implementation (only when HIL is disabled)
     if (copter.g2.dev_options.get() & DevOptionVFR_HUDRelativeAlt) {
         // compatibility option for older mavlink-aware devices that
         // assume Copter returns a relative altitude in VFR_HUD.alt
-        float alt = copter.current_loc.alt * 0.01f;
-        gcs().send_text(MAV_SEVERITY_DEBUG, "vfr_hud_alt from DevOption: %.2f m", (double)alt);
-        return alt;
+        return copter.current_loc.alt * 0.01f;
     }
     
     // Use the same altitude value as altasl for consistency
-    float alt = GCS_MAVLINK::vfr_hud_alt();
-    gcs().send_text(MAV_SEVERITY_DEBUG, "vfr_hud_alt from base: %.2f m", (double)alt);
-    return alt;
+    return GCS_MAVLINK::vfr_hud_alt();
 }
 
 uint64_t GCS_MAVLINK_Copter::capabilities() const

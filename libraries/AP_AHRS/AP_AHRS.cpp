@@ -35,6 +35,7 @@
 #include <AP_InternalError/AP_InternalError.h>
 #include <AP_Logger/AP_Logger.h>
 #include <AP_Notify/AP_Notify.h>
+#include <AP_tandem/AP_Groundspeed_HILS.h> // tandem-sils
 #include <AP_Vehicle/AP_Vehicle_Type.h>
 #include <GCS_MAVLink/GCS.h>
 #include <AP_InertialSensor/AP_InertialSensor.h>
@@ -44,6 +45,7 @@
 #endif
 #include <AP_NavEKF3/AP_NavEKF3_feature.h>
 #include <AP_HIL/AP_HIL.h>
+#include <AP_Airspeed/AP_Airspeed_HILS.h>
 
 #define ATTITUDE_CHECK_THRESH_ROLL_PITCH_RAD radians(10)
 #define ATTITUDE_CHECK_THRESH_YAW_RAD radians(20)
@@ -1391,6 +1393,11 @@ bool AP_AHRS::_get_secondary_position(Location &loc) const
 // EKF has a better ground speed vector estimate
 Vector2f AP_AHRS::_groundspeed_vector(void)
 {
+    // tandem-sils: HILS groundspeed via helper (anti-glitch hold)
+    Vector2f hil_vxy;
+    if (AP_tandem::GroundspeedHILS::get_groundspeed_vector(hil_vxy)) {
+        return hil_vxy;
+    }
     switch (active_EKF_type()) {
 #if AP_AHRS_DCM_ENABLED
     case EKFType::DCM:
@@ -1428,6 +1435,11 @@ Vector2f AP_AHRS::_groundspeed_vector(void)
 
 float AP_AHRS::_groundspeed(void)
 {
+    // tandem-sils: HILS groundspeed via helper (anti-glitch hold)
+    float hil_speed = 0.0f;
+    if (AP_tandem::GroundspeedHILS::get_groundspeed(hil_speed)) {
+        return hil_speed;
+    }
     switch (active_EKF_type()) {
 #if AP_AHRS_DCM_ENABLED
     case EKFType::DCM:
@@ -3701,10 +3713,9 @@ void AP_AHRS::update_HIL_override(void)
         state.accel_bias.zero();
     }
 
-    // 대기속도
+    // tandem-sils: airspeed
     float h_airspeed;
-    if (hil->get_hil_nav_airspeed(h_airspeed)) {
-        // tandem-sils: airspeed
+    if (AP_Airspeed_HILS::get_hil_airspeed(h_airspeed)) {
         state.airspeed = h_airspeed;
         state.airspeed_ok = true;
     }

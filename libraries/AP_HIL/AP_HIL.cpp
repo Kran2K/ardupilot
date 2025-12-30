@@ -18,6 +18,10 @@ AP_HIL::AP_HIL() {
     }
     _singleton = this;
     _nav_state.last_update_ms = 0;
+    _nav_state.vel.zero();
+    _nav_state.gyro.zero();
+    _nav_state.accel.zero();
+    _nav_state.airspeed = 0.0f;
 }
 
 void AP_HIL::init() {
@@ -55,6 +59,7 @@ void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
         return;
     }
 
+    // tandem-sils: HILS vx,vy,vz, alt 수신
     mavlink_hil_state_quaternion_t packet;
     mavlink_msg_hil_state_quaternion_decode(&msg, &packet);
 
@@ -115,6 +120,18 @@ bool AP_HIL::get_hil_nav_vel(Vector3f& out_vel) const
 
     WITH_SEMAPHORE(_sem);
     out_vel = _nav_state.vel;
+    return true;
+}
+
+bool AP_HIL::get_hil_nav_vel_with_age(Vector3f& out_vel, uint32_t& age_ms) const
+{
+    if (!is_enabled()) {
+        return false;
+    }
+    WITH_SEMAPHORE(_sem);
+    out_vel = _nav_state.vel;
+    uint32_t now = AP_HAL::millis();
+    age_ms = now - _nav_state.last_update_ms;
     return true;
 }
 

@@ -216,8 +216,17 @@ bool AP_ExternalAHRS::get_location(Location &loc)
 
 Vector2f AP_ExternalAHRS::get_groundspeed_vector()
 {
+    // tandem-sils: ONLY HILS - Force use of vx, vy velocity data from HILS MAVLink HIL_STATE_QUATERNION message
+    // Completely ignore FC internal sensor data - use HILS simulation data exclusively
     WITH_SEMAPHORE(state.sem);
-    Vector2f vec{state.velocity.x, state.velocity.y};
+    
+    // CRITICAL: state.velocity MUST contain HILS MAVLink data from HIL_STATE_QUATERNION message
+    // This is the ONLY valid source for groundspeed calculation
+    // Do NOT use FC sensor fusion results - HILS only
+    Vector3f hils_velocity = state.velocity;
+    
+    // Extract XY components from HILS (North-East in NED frame from HIL_STATE_QUATERNION vx, vy)
+    Vector2f vec{hils_velocity.x, hils_velocity.y};
     return vec;
 }
 

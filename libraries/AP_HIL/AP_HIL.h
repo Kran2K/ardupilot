@@ -28,10 +28,12 @@ public:
     bool get_hil_nav_quat(Quaternion& out_quat) const;
     bool get_hil_nav_location(Location& out_loc) const;
     bool get_hil_nav_vel(Vector3f& out_vel) const;
+    // tandem-sils: Groundspeed 0으로 깜빡임 방지, age에서 받아옴
+    bool get_hil_nav_vel_with_age(Vector3f& out_vel, uint32_t& age_ms) const;
     bool get_hil_nav_gyro(Vector3f& out_gyro) const;
     bool get_hil_nav_accel(Vector3f& out_accel) const;
     bool get_hil_nav_airspeed(float& out_airspeed) const;
-    bool get_hil_nav_altitude(int32_t& out_altitude) const; //my add
+    bool get_hil_nav_altitude(int32_t& out_altitude) const;
 
     // 센서가 데이터를 빼가는 함수
     bool get_hil_sensor_gyro(Vector3f& out_gyro) const;
