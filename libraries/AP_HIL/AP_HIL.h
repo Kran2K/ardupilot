@@ -5,9 +5,18 @@
 #include <AP_Math/AP_Math.h>
 #include <AP_Common/Location.h>
 #include <AP_HAL/Semaphores.h>
+#include "AP_HIL_SENSOR.h"  // tandem-sils: HIL_SENSOR 데이터 처리
 
 class AP_HIL {
 public:
+    // tandem-sils: HIL 데이터 타임아웃 (ms) - 이 시간 이상 업데이트 없으면 invalid
+    static constexpr uint32_t HIL_DATA_TIMEOUT_MS = 5000;
+    
+    // Unit conversion constants
+    static constexpr float CM_TO_M = 0.01f;
+    static constexpr uint32_t CM_TO_MM = 10UL;
+    static constexpr float M_TO_CM = 100.0f;
+    
     static AP_HIL* get_singleton() {
         return _singleton;
     }
@@ -32,21 +41,38 @@ public:
     bool get_hil_nav_vel_with_age(Vector3f& out_vel, uint32_t& age_ms) const;
     bool get_hil_nav_gyro(Vector3f& out_gyro) const;
     bool get_hil_nav_accel(Vector3f& out_accel) const;
+    bool get_hil_nav_accel_raw_millig(Vector3f& out_accel_mg) const;  // tandem-sils: RAW_IMU/SCALED_IMU2용 원본 millig
     bool get_hil_nav_airspeed(float& out_airspeed) const;
-    bool get_hil_nav_altitude(int32_t& out_altitude) const;
+    
+    // HIL-first altitude access (HIL → AHRS fallback)
+    bool get_hil_altitude_data(Location &loc) const;
+    float get_vfr_hud_alt_with_hil(bool use_dev_option, float dev_alt) const;
+    int32_t get_global_position_int_alt() const;
+    int32_t get_global_position_int_relative_alt() const;
+    float get_ahrs2_alt() const;
 
-    // 센서가 데이터를 빼가는 함수
-    bool get_hil_sensor_gyro(Vector3f& out_gyro) const;
-    bool get_hil_sensor_accel(Vector3f& out_accel) const;
-    bool get_hil_sensor_mag(Vector3f& out_mag) const;
+    // 센서가 데이터를 빼가는 함수 (baro, pitot만 - gyro/accel/mag은 AP_HIL_SENSOR 사용)
     bool get_hil_sensor_baro(float& out_pressure, float& out_temp) const;
+    bool get_hil_sensor_baro_alt(float& out_alt) const;
     bool get_hil_sensor_diff_pressure(float& out_diff_press) const;
+    
+    // tandem-sils: HIL 센서 데이터 통합 접근 (센서별로 HIL 우선 사용)
+    bool get_hil_sensor_data(float* abs_pressure, float* diff_pressure, float* pressure_alt, float* temperature) const;
+    
+    // tandem-sils: AP_HIL_SENSOR 접근자 - RAW_IMU/SCALED_IMU2 오버라이드용
+    AP_HIL_SENSOR& get_hil_sensor_module() { return _hil_sensor; }
 
 private:
     static AP_HIL *_singleton;
     bool _is_enabled = true;
     
     mutable HAL_Semaphore _sem;
+    
+    // Private helper for altitude functions
+    bool get_hil_location_alt_cm(int32_t &alt_cm) const;
+    
+    // tandem-sils: HIL_SENSOR 데이터 처리 모듈
+    AP_HIL_SENSOR _hil_sensor;
     
     struct {
         uint32_t last_update_ms;
@@ -55,8 +81,8 @@ private:
         Vector3f vel;
         Vector3f gyro;
         Vector3f accel;
+        Vector3f accel_raw_millig;  // tandem-sils: HIL_STATE_QUATERNION 원본 millig 값
         float airspeed;
-        // int32_t altitude; //my add
     } _nav_state;
 
     struct SensorState {
@@ -66,6 +92,7 @@ private:
         Vector3f mag;           // [mGauss] Raw Magnetometer
         float baro_pressure;    // [Pa] Absolute Pressure
         float baro_temp;        // [degC] Temperature
+        float pressure_alt;     // [m] Pressure Altitude
         float diff_pressure;    // [Pa] Differential Pressure (for Airspeed Sensor)
     } _sensor_state;
 };

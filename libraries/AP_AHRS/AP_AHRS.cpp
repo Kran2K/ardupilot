@@ -1395,7 +1395,7 @@ Vector2f AP_AHRS::_groundspeed_vector(void)
 {
     // tandem-sils: HILS groundspeed via helper (anti-glitch hold)
     Vector2f hil_vxy;
-    if (AP_tandem::GroundspeedHILS::get_groundspeed_vector(hil_vxy)) {
+    if (AP_tandem::get_hil_groundspeed_vector(hil_vxy)) {
         return hil_vxy;
     }
     switch (active_EKF_type()) {
@@ -1437,7 +1437,7 @@ float AP_AHRS::_groundspeed(void)
 {
     // tandem-sils: HILS groundspeed via helper (anti-glitch hold)
     float hil_speed = 0.0f;
-    if (AP_tandem::GroundspeedHILS::get_groundspeed(hil_speed)) {
+    if (AP_tandem::get_hil_groundspeed(hil_speed)) {
         return hil_speed;
     }
     switch (active_EKF_type()) {
@@ -3715,7 +3715,7 @@ void AP_AHRS::update_HIL_override(void)
 
     // tandem-sils: airspeed
     float h_airspeed;
-    if (AP_Airspeed_HILS::get_hil_airspeed(h_airspeed)) {
+    if (hil->get_hil_nav_airspeed(h_airspeed)) {
         state.airspeed = h_airspeed;
         state.airspeed_ok = true;
     }

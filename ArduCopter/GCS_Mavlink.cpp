@@ -3,7 +3,7 @@
 #include "GCS_Mavlink.h"
 #include <AP_RPM/AP_RPM_config.h>
 #include <AP_EFI/AP_EFI_config.h>
-#include <AP_Airspeed/AP_Airspeed_HILS.h>
+#include <AP_HIL/AP_HIL.h>
 
 MAV_TYPE GCS_Copter::frame_type() const
 {
@@ -1544,13 +1544,16 @@ MAV_RESULT GCS_MAVLINK_Copter::handle_flight_termination(const mavlink_command_i
 float GCS_MAVLINK_Copter::vfr_hud_alt() const
 {
     // tandem-sils: vfr_hud_alt 무시하고 HIL 고도 강제 사용
-    float hil_alt = AP_Airspeed_HILS::get_vfr_hud_alt_with_hil(
-        copter.g2.dev_options.get() & DevOptionVFR_HUDRelativeAlt,
-        copter.current_loc.alt * AP_Airspeed_HILS::CM_TO_M
-    );
-    
-    if (hil_alt > 0.0f) {
-        return hil_alt;
+    auto *hil = AP::hil();
+    if (hil && hil->is_enabled()) {
+        float hil_alt = hil->get_vfr_hud_alt_with_hil(
+            copter.g2.dev_options.get() & DevOptionVFR_HUDRelativeAlt,
+            copter.current_loc.alt * 0.01f
+        );
+        
+        if (hil_alt > 0.0f) {
+            return hil_alt;
+        }
     }
     
     // Fallback to compatibility option or base implementation (only when HIL is disabled)

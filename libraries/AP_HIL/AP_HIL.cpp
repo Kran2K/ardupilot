@@ -3,6 +3,7 @@
 #include <AP_InertialSensor/AP_InertialSensor.h>
 #include <AP_Baro/AP_Baro.h>
 #include <AP_Compass/AP_Compass.h>
+#include <AP_AHRS/AP_AHRS.h>
 
 AP_HIL *AP_HIL::_singleton;
 
@@ -45,12 +46,17 @@ void AP_HIL::handle_hil_sensor(const mavlink_message_t &msg)
 
     _sensor_state.accel = Vector3f(packet.xacc, packet.yacc, packet.zacc);
 
-    _sensor_state.mag = Vector3f(packet.xmag, packet.ymag, packet.zmag) * 1000.0f;
+    // tandem-sils: 원본 gauss 값 그대로 저장 (변환 없음)
+    _sensor_state.mag = Vector3f(packet.xmag, packet.ymag, packet.zmag);
 
-    _sensor_state.baro_pressure = packet.abs_pressure * 100.0f;
-    _sensor_state.baro_temp = packet.temperature;
+    _sensor_state.baro_pressure = packet.abs_pressure * 100.0f;  // mbar -> Pa
+    _sensor_state.baro_temp = packet.temperature;  // degC
+    _sensor_state.pressure_alt = packet.pressure_alt * 0.001f;  // mm -> m
 
-    _sensor_state.diff_pressure = packet.diff_pressure * 100.0f;
+    _sensor_state.diff_pressure = packet.diff_pressure * 100.0f;  // mbar -> Pa
+    
+    // tandem-sils: AP_HIL_SENSOR 모듈 업데이트 (RAW_IMU/SCALED_IMU2 오버라이드용)
+    _hil_sensor.update_sensor_data(_sensor_state.gyro, _sensor_state.accel, _sensor_state.mag);
 }
 
 void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
@@ -64,7 +70,6 @@ void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
     mavlink_msg_hil_state_quaternion_decode(&msg, &packet);
 
     static const float MG_TO_MSS = 9.80665f * 0.001f;
-    static const float CM_TO_M = 0.01f;
 
     WITH_SEMAPHORE(_sem);
 
@@ -78,6 +83,9 @@ void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
     _nav_state.gyro = Vector3f(packet.rollspeed, packet.pitchspeed, packet.yawspeed);
 
     _nav_state.accel = Vector3f(packet.xacc, packet.yacc, packet.zacc) * MG_TO_MSS;
+    
+    // tandem-sils: 원본 millig 값 저장 (RAW_IMU/SCALED_IMU2용)
+    _nav_state.accel_raw_millig = Vector3f(packet.xacc, packet.yacc, packet.zacc);
 
     _nav_state.loc.lat = packet.lat;
     _nav_state.loc.lng = packet.lon;
@@ -129,8 +137,14 @@ bool AP_HIL::get_hil_nav_vel_with_age(Vector3f& out_vel, uint32_t& age_ms) const
         return false;
     }
     WITH_SEMAPHORE(_sem);
-    out_vel = _nav_state.vel;
+    
+    // tandem-sils: age만 반환, 타임아웃 체크는 호출자가 판단
+    if (_nav_state.last_update_ms == 0) {
+        return false;  // 한 번도 데이터를 받은 적 없음
+    }
+    
     uint32_t now = AP_HAL::millis();
+    out_vel = _nav_state.vel;
     age_ms = now - _nav_state.last_update_ms;
     return true;
 }
@@ -157,6 +171,18 @@ bool AP_HIL::get_hil_nav_accel(Vector3f& out_accel) const
     return true;
 }
 
+// tandem-sils: RAW_IMU/SCALED_IMU2용 원본 millig 가속도 값 반환
+bool AP_HIL::get_hil_nav_accel_raw_millig(Vector3f& out_accel_mg) const
+{
+    if (!is_enabled()) {
+        return false;
+    }
+
+    WITH_SEMAPHORE(_sem);
+    out_accel_mg = _nav_state.accel_raw_millig;
+    return true;
+}
+
 bool AP_HIL::get_hil_nav_airspeed(float& out_airspeed) const
 {
     if (!is_enabled()) {
@@ -165,53 +191,6 @@ bool AP_HIL::get_hil_nav_airspeed(float& out_airspeed) const
 
     WITH_SEMAPHORE(_sem);
     out_airspeed = _nav_state.airspeed;
-    return true;
-}
-//raw alt my add
-// bool AP_HIL::get_hil_nav_altitude(int32_t& out_altitude) const
-// {
-//     if (!is_enabled()) {
-//         return false;
-//     }
-
-//     WITH_SEMAPHORE(_sem);
-//     out_altitude = _nav_state.loc.alt * 0.01f; // cm to m
-//     return true;
-// }
-
-// raw 자이로
-bool AP_HIL::get_hil_sensor_gyro(Vector3f& out_gyro) const
-{
-    if (!is_enabled()) {
-        return false;
-    }
-
-    WITH_SEMAPHORE(_sem);
-    out_gyro = _sensor_state.gyro;
-    return true;
-}
-
-// raw 가속도
-bool AP_HIL::get_hil_sensor_accel(Vector3f& out_accel) const
-{
-    if (!is_enabled()) {
-        return false;
-    }
-
-    WITH_SEMAPHORE(_sem);
-    out_accel = _sensor_state.accel;
-    return true;
-}
-
-// raw 자력계
-bool AP_HIL::get_hil_sensor_mag(Vector3f& out_mag) const
-{
-    if (!is_enabled()) {
-        return false;
-    }
-
-    WITH_SEMAPHORE(_sem);
-    out_mag = _sensor_state.mag;
     return true;
 }
 
@@ -238,4 +217,141 @@ bool AP_HIL::get_hil_sensor_diff_pressure(float& out_diff_press) const
     WITH_SEMAPHORE(_sem);
     out_diff_press = _sensor_state.diff_pressure;
     return true;
+}
+
+// pressure altitude from HIL_SENSOR
+bool AP_HIL::get_hil_sensor_baro_alt(float& out_alt) const
+{
+    if (!is_enabled()) {
+        return false;
+    }
+
+    WITH_SEMAPHORE(_sem);
+    out_alt = _sensor_state.pressure_alt;
+    return true;
+}
+
+// tandem-sils: HIL 센서 데이터 통합 접근 - HIL 활성화되면 모든 pressure 데이터 강제 사용
+bool AP_HIL::get_hil_sensor_data(float* abs_pressure, float* diff_pressure, float* pressure_alt, float* temperature) const
+{
+    if (!is_enabled()) {
+        return false;
+    }
+
+    WITH_SEMAPHORE(_sem);
+    
+    if (abs_pressure) {
+        *abs_pressure = _sensor_state.baro_pressure;
+    }
+    if (diff_pressure) {
+        *diff_pressure = _sensor_state.diff_pressure;
+    }
+    if (pressure_alt) {
+        *pressure_alt = _sensor_state.pressure_alt;
+    }
+    if (temperature) {
+        *temperature = _sensor_state.baro_temp;
+    }
+    
+    return true;
+}
+
+// HIL altitude in cm (private helper)
+bool AP_HIL::get_hil_location_alt_cm(int32_t &alt_cm) const
+{
+    if (!is_enabled()) {
+        return false;
+    }
+    
+    Location hil_loc {};
+    if (!get_hil_nav_location(hil_loc)) {
+        return false;
+    }
+    
+    alt_cm = hil_loc.alt;
+    return true;
+}
+
+bool AP_HIL::get_hil_altitude_data(Location &loc) const
+{
+    if (!is_enabled()) {
+        return false;
+    }
+    
+    Location hil_loc {};
+    if (!get_hil_nav_location(hil_loc)) {
+        return false;
+    }
+    
+    loc.lat = hil_loc.lat;
+    loc.lng = hil_loc.lng;
+    loc.set_alt_cm(hil_loc.alt, Location::AltFrame::ABOVE_ORIGIN);
+    
+#if AP_AHRS_ENABLED
+    if (!AP::ahrs().home_is_set() || !loc.change_alt_frame(Location::AltFrame::ABOVE_HOME)) {
+        loc.set_alt_cm(hil_loc.alt, Location::AltFrame::ABOVE_HOME);
+    }
+#endif
+    
+    return true;
+}
+
+float AP_HIL::get_vfr_hud_alt_with_hil(bool use_dev_option, float dev_alt) const
+{
+    int32_t alt_cm;
+    if (get_hil_location_alt_cm(alt_cm)) {
+        return alt_cm * CM_TO_M;
+    }
+    return use_dev_option ? dev_alt : 0.0f;
+}
+
+int32_t AP_HIL::get_global_position_int_alt() const
+{
+    int32_t alt_cm;
+    if (get_hil_location_alt_cm(alt_cm)) {
+        return alt_cm * CM_TO_MM;
+    }
+    
+#if AP_AHRS_ENABLED
+    Location ahrs_loc {};
+    if (AP::ahrs().get_location(ahrs_loc)) {
+        return ahrs_loc.alt * CM_TO_MM;
+    }
+#endif
+    
+    return 0;
+}
+
+int32_t AP_HIL::get_global_position_int_relative_alt() const
+{
+    int32_t alt_cm;
+    if (get_hil_location_alt_cm(alt_cm)) {
+        return alt_cm * CM_TO_MM;
+    }
+    
+#if AP_AHRS_ENABLED
+    float posD;
+    AP::ahrs().get_relative_position_D_home(posD);
+    posD *= -1000.0f;
+    return posD;
+#else
+    return 0;
+#endif
+}
+
+float AP_HIL::get_ahrs2_alt() const
+{
+    int32_t alt_cm;
+    if (get_hil_location_alt_cm(alt_cm)) {
+        return alt_cm * CM_TO_M;
+    }
+    
+#if AP_AHRS_ENABLED
+    Location loc {};
+    if (AP::ahrs().get_secondary_position(loc)) {
+        return loc.alt * CM_TO_M;
+    }
+#endif
+    
+    return 0.0f;
 }
