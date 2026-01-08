@@ -3688,7 +3688,8 @@ void AP_AHRS::update_HIL_override(void)
     // 속도
     Vector3f h_vel;
     if (hil->get_hil_nav_vel(h_vel)) {
-        state.velocity_NED = h_vel;
+        // tandem-sils: HIL velocity는 cm/s, m/s로 변환
+        state.velocity_NED = h_vel * 0.01f;
         state.velocity_NED_ok = true;
     }
 
@@ -3716,7 +3717,8 @@ void AP_AHRS::update_HIL_override(void)
     // tandem-sils: airspeed
     float h_airspeed;
     if (hil->get_hil_nav_airspeed(h_airspeed)) {
-        state.airspeed = h_airspeed;
+        // tandem-sils: HIL airspeed는 cm/s, m/s로 변환
+        state.airspeed = h_airspeed * 0.01f;
         state.airspeed_ok = true;
     }
 }
