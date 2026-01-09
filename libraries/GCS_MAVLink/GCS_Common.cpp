@@ -2165,28 +2165,31 @@ void GCS_MAVLINK::send_raw_imu()
     }
 #endif
 
-    // tandem-sils: HIL_STATE_QUATERNION 데이터로 오버라이드
+    // tandem-sils: HIL_SENSOR 데이터로 RAW_IMU 오버라이드 (accel, gyro, mag 사용)
     auto *hil = AP::hil();
     if (hil != nullptr && hil->is_enabled()) {
-        Vector3f hil_gyro, hil_accel_mg, hil_mag;
-        if (hil->get_hil_nav_gyro(hil_gyro) && 
-            hil->get_hil_nav_accel_raw_millig(hil_accel_mg) &&
-            hil->get_hil_sensor_mag(hil_mag)) {
-            // HIL_STATE_QUATERNION: accel (milli-g), gyro (rad/s)
-            // HIL_SENSOR: mag (gauss)
-            // RAW_IMU: accel (milli-g), gyro (mrad/s), mag (mgauss)
+        Vector3f hil_sensor_accel, hil_sensor_gyro, hil_sensor_mag;
+        
+        // tandem-sils: HIL_SENSOR의 accel, gyro, mag가 있으면 사용
+        bool has_sensor_accel = hil->get_hil_sensor_accel(hil_sensor_accel);
+        bool has_sensor_gyro = hil->get_hil_sensor_gyro(hil_sensor_gyro);
+        bool has_sensor_mag = hil->get_hil_sensor_mag(hil_sensor_mag);
+        
+        if (has_sensor_accel && has_sensor_gyro && has_sensor_mag) {
+            // tandem-sils: HIL_SENSOR accel (m/s²), gyro (rad/s), mag (gauss) 사용
+            // RAW_IMU 출력: accel (milli-g), gyro (mrad/s), mag (mgauss)
             mavlink_msg_raw_imu_send(
                 chan,
                 AP_HAL::micros64(),
-                hil_accel_mg.x / 1000.0f,
-                hil_accel_mg.y / 1000.0f,
-                hil_accel_mg.z / 1000.0f,
-                hil_gyro.x * 1000.0f,  // rad/s -> mrad/s
-                hil_gyro.y * 1000.0f,
-                hil_gyro.z * 1000.0f,
-                hil_mag.x * 1000.0f,  // gauss -> mgauss
-                hil_mag.y * 1000.0f,
-                hil_mag.z * 1000.0f,
+                hil_sensor_accel.x * 1000.0f / GRAVITY_MSS,  // tandem-sils: HIL_SENSOR m/s² -> milli-g
+                hil_sensor_accel.y * 1000.0f / GRAVITY_MSS,
+                hil_sensor_accel.z * 1000.0f / GRAVITY_MSS,
+                hil_sensor_gyro.x * 1000.0f,  // tandem-sils: HIL_SENSOR rad/s -> mrad/s
+                hil_sensor_gyro.y * 1000.0f,
+                hil_sensor_gyro.z * 1000.0f,
+                hil_sensor_mag.x* 1000.0f,   // tandem-sils: HIL_SENSOR gauss -> mgauss
+                hil_sensor_mag.y* 1000.0f,
+                hil_sensor_mag.z* 1000.0f,
                 0,
                 int16_t(ins.get_temperature(0)*100));
             return;
@@ -2319,30 +2322,32 @@ void GCS_MAVLINK::send_scaled_imu(uint8_t instance, void (*send_fn)(mavlink_chan
     }
 #endif
 
-    // tandem-sils: instance 0, 1을 HIL_STATE_QUATERNION 데이터로 강제 오버라이드 (SCALED_IMU, SCALED_IMU2)
+    // tandem-sils: instance 0, 1을 HIL_SENSOR 데이터로 강제 오버라이드 (SCALED_IMU, SCALED_IMU2)
     if (instance <= 1) {
         auto *hil = AP::hil();
         if (hil != nullptr && hil->is_enabled()) {
-            Vector3f hil_gyro, hil_accel_mg, hil_mag;
-            if (hil->get_hil_nav_gyro(hil_gyro) &&
-                hil->get_hil_nav_accel_raw_millig(hil_accel_mg) &&
-                hil->get_hil_sensor_mag(hil_mag)) {
-                // HIL_STATE_QUATERNION 데이터가 있으면 내부 센서 무시하고 강제 사용
-                // HIL_STATE_QUATERNION: accel (milli-g), gyro (rad/s)
-                // HIL_SENSOR: mag (gauss)
-                // SCALED_IMU: accel (milli-g), gyro (mrad/s), mag (mgauss)
+            Vector3f hil_sensor_accel, hil_sensor_gyro, hil_sensor_mag;
+            
+            // tandem-sils: HIL_SENSOR의 accel, gyro, mag가 있으면 사용
+            bool has_sensor_accel = hil->get_hil_sensor_accel(hil_sensor_accel);
+            bool has_sensor_gyro = hil->get_hil_sensor_gyro(hil_sensor_gyro);
+            bool has_sensor_mag = hil->get_hil_sensor_mag(hil_sensor_mag);
+            
+            if (has_sensor_accel && has_sensor_gyro && has_sensor_mag) {
+                // tandem-sils: HIL_SENSOR accel (m/s²), gyro (rad/s), mag (gauss) 사용
+                // SCALED_IMU 출력: accel (milli-g), gyro (mrad/s), mag (mgauss)
                 send_fn(
                     chan,
                     AP_HAL::millis(),
-                    hil_accel_mg.x / 1000.0f,
-                    hil_accel_mg.y / 1000.0f,
-                    hil_accel_mg.z / 1000.0f,
-                    hil_gyro.x * 1000.0f,  // rad/s -> mrad/s
-                    hil_gyro.y * 1000.0f,
-                    hil_gyro.z * 1000.0f,
-                    hil_mag.x * 1000.0f,  // gauss -> mgauss
-                    hil_mag.y * 1000.0f,
-                    hil_mag.z * 1000.0f,
+                    hil_sensor_accel.x * 1000.0f / GRAVITY_MSS,  // tandem-sils: HIL_SENSOR m/s² -> milli-g
+                    hil_sensor_accel.y * 1000.0f / GRAVITY_MSS,
+                    hil_sensor_accel.z * 1000.0f / GRAVITY_MSS,
+                    hil_sensor_gyro.x * 1000.0f,  // tandem-sils: HIL_SENSOR rad/s -> mrad/s
+                    hil_sensor_gyro.y * 1000.0f,
+                    hil_sensor_gyro.z * 1000.0f,
+                    hil_sensor_mag.x * 1000.0f,   // tandem-sils: HIL_SENSOR gauss -> mgauss
+                    hil_sensor_mag.y * 1000.0f,
+                    hil_sensor_mag.z * 1000.0f,
                     _temperature);
                 return;
             }

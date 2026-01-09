@@ -38,7 +38,6 @@ public:
     bool get_hil_nav_vel(Vector3f& out_vel) const;
     bool get_hil_nav_gyro(Vector3f& out_gyro) const;
     bool get_hil_nav_accel(Vector3f& out_accel) const;
-    bool get_hil_nav_accel_raw_millig(Vector3f& out_accel_mg) const;  // tandem-sils: RAW_IMU/SCALED_IMU2용 원본 millig
     bool get_hil_nav_airspeed(float& out_airspeed) const;
     
     // tandem-sils: HIL-first altitude access (HIL → AHRS fallback)
@@ -77,7 +76,6 @@ private:
         Vector3f vel;
         Vector3f gyro;
         Vector3f accel;
-        Vector3f accel_raw_millig;  // tandem-sils: HIL_STATE_QUATERNION 원본 millig 값
         float airspeed;
     } _nav_state;
 

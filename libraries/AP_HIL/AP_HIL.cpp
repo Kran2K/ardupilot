@@ -44,6 +44,7 @@ void AP_HIL::handle_hil_sensor(const mavlink_message_t &msg)
 
     _sensor_state.gyro = Vector3f(packet.xgyro, packet.ygyro, packet.zgyro);
 
+    // tandem-sils: HIL_SENSOR accel (m/s²) 저장
     _sensor_state.accel = Vector3f(packet.xacc, packet.yacc, packet.zacc);
 
     // tandem-sils: 원본 gauss 값 그대로 저장 (변환 없음)
@@ -66,8 +67,6 @@ void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
     mavlink_hil_state_quaternion_t packet;
     mavlink_msg_hil_state_quaternion_decode(&msg, &packet);
 
-    static const float MG_TO_MSS = 9.80665f * 0.001f;
-
     WITH_SEMAPHORE(_sem);
 
     _nav_state.last_update_ms = AP_HAL::millis();
@@ -79,10 +78,9 @@ void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
 
     _nav_state.gyro = Vector3f(packet.rollspeed, packet.pitchspeed, packet.yawspeed);
 
-    _nav_state.accel = Vector3f(packet.xacc, packet.yacc, packet.zacc) * MG_TO_MSS;
-    
-    // tandem-sils: 원본 millig 값 저장 (RAW_IMU/SCALED_IMU2용)
-    _nav_state.accel_raw_millig = Vector3f(packet.xacc, packet.yacc, packet.zacc);
+    // tandem-sils: HIL_STATE_QUATERNION에서는 accel을 사용하지 않음 (HIL_SENSOR 사용)
+    // _nav_state.accel = Vector3f(packet.xacc, packet.yacc, packet.zacc) * MG_TO_MSS;
+    // _nav_state.accel_raw_millig = Vector3f(packet.xacc, packet.yacc, packet.zacc);
 
     _nav_state.loc.lat = packet.lat;
     _nav_state.loc.lng = packet.lon;
@@ -149,18 +147,6 @@ bool AP_HIL::get_hil_nav_accel(Vector3f& out_accel) const
 
     WITH_SEMAPHORE(_sem);
     out_accel = _nav_state.accel;
-    return true;
-}
-
-// tandem-sils: RAW_IMU/SCALED_IMU2용 원본 millig 가속도 값 반환
-bool AP_HIL::get_hil_nav_accel_raw_millig(Vector3f& out_accel_mg) const
-{
-    if (!is_enabled()) {
-        return false;
-    }
-
-    WITH_SEMAPHORE(_sem);
-    out_accel_mg = _nav_state.accel_raw_millig;
     return true;
 }
 
