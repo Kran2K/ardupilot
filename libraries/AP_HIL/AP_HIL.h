@@ -52,7 +52,7 @@ public:
     bool get_hil_sensor_baro_alt(float& out_alt) const;
     bool get_hil_sensor_diff_pressure(float& out_diff_press) const;
     
-    // tandem-sils: HIL_SENSOR IMU 데이터 접근 (RAW_IMU/SCALED_IMU 오버라이드용)
+    // tandem-sils: HIL_SENSOR RAW_IMU/SCALED_IMU 오버라이드 데이터
     bool get_hil_sensor_gyro(Vector3f& out_gyro) const;  // rad/s
     bool get_hil_sensor_accel(Vector3f& out_accel) const;  // m/s^2
     bool get_hil_sensor_mag(Vector3f& out_mag) const;  // gauss

@@ -34,26 +34,26 @@ void AP_HIL::handle_hil_sensor(const mavlink_message_t &msg)
     if (!is_enabled()) {
         return;
     }
-
+    //tandem-sils: HIL_SENSOR 메세지 디코딩
     mavlink_hil_sensor_t packet;
     mavlink_msg_hil_sensor_decode(&msg, &packet);
 
     WITH_SEMAPHORE(_sem);
 
     _sensor_state.last_update_ms = AP_HAL::millis();
-
+    //tandem-sils : gyro 데이터 수신
     _sensor_state.gyro = Vector3f(packet.xgyro, packet.ygyro, packet.zgyro);
 
-    // tandem-sils: HIL_SENSOR accel (m/s²) 저장
-    _sensor_state.accel = Vector3f(packet.xacc, packet.yacc, packet.zacc);
+    // tandem-sils: acc 데이터 수신
+    _sensor_state.accel = Vector3f(packet.xacc, packet.yacc, packet.zacc);  // g -> m/s^2
 
-    // tandem-sils: 원본 gauss 값 그대로 저장 (변환 없음)
+    // tandem-sils: mag 데이터 수신
     _sensor_state.mag = Vector3f(packet.xmag, packet.ymag, packet.zmag);
-
+    
+    // tandem-sils: baro 데이터 수신
     _sensor_state.baro_pressure = packet.abs_pressure * 100.0f;  // mbar -> Pa
     _sensor_state.baro_temp = packet.temperature;  // degC
     _sensor_state.pressure_alt = packet.pressure_alt * 0.001f;  // mm -> m
-
     _sensor_state.diff_pressure = packet.diff_pressure * 100.0f;  // mbar -> Pa
 }
 
@@ -63,14 +63,14 @@ void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
         return;
     }
 
-    // tandem-sils: HILS vx,vy,vz, alt 수신
+    // tandem-sils: QUATERNION 메세지 디코딩
     mavlink_hil_state_quaternion_t packet;
     mavlink_msg_hil_state_quaternion_decode(&msg, &packet);
 
     WITH_SEMAPHORE(_sem);
 
     _nav_state.last_update_ms = AP_HAL::millis();
-
+    // tandem-sils : Quaternion 데이터 수신
     _nav_state.quat = Quaternion(packet.attitude_quaternion[0], 
                              packet.attitude_quaternion[1], 
                              packet.attitude_quaternion[2], 
@@ -78,20 +78,17 @@ void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
 
     _nav_state.gyro = Vector3f(packet.rollspeed, packet.pitchspeed, packet.yawspeed);
 
-    // tandem-sils: HIL_STATE_QUATERNION에서는 accel을 사용하지 않음 (HIL_SENSOR 사용)
-    // _nav_state.accel = Vector3f(packet.xacc, packet.yacc, packet.zacc) * MG_TO_MSS;
-    // _nav_state.accel_raw_millig = Vector3f(packet.xacc, packet.yacc, packet.zacc);
+    // tandem-sils: lat, lon, alt 데이터 수신
+    _nav_state.loc.lat = packet.lat*1e7;
+    _nav_state.loc.lng = packet.lon*1e7;
+    _nav_state.loc.alt = packet.alt*100; // mm -> cm
+    //_nav_state.loc.relative_alt = 0;
+    //_nav_state.loc.terrain_alt = 0;
 
-    _nav_state.loc.lat = packet.lat;
-    _nav_state.loc.lng = packet.lon;
-    _nav_state.loc.alt = packet.alt / 10; // mm -> cm
-    _nav_state.loc.relative_alt = 0;
-    _nav_state.loc.terrain_alt = 0;
+    // tandem-sils: vx,vy,vz 데이터 수신
+    _nav_state.vel = Vector3f(packet.vx, packet.vy, packet.vz) * 0.01f;
 
-    // tandem-sils: vx,vy,vz는 cm/s로 들어오지만 100배 증폭되어 있음, 다시 100으로 나누고 0.01 곱해서 m/s로 저장
-    _nav_state.vel = Vector3f(packet.vx, packet.vy, packet.vz) * 0.0001f;
-
-    // tandem-sils: ind_airspeed는 cm/s로 들어오지만 100배 증폭되어 있음, 다시 100으로 나누고 0.01 곱해서 m/s로 저장
+    // tandem-sils: ind_airspeed 데이터 수신
     _nav_state.airspeed = packet.ind_airspeed * 0.01f;
 }
 
@@ -198,7 +195,7 @@ bool AP_HIL::get_hil_sensor_baro_alt(float& out_alt) const
     return true;
 }
 
-// tandem-sils: HIL_SENSOR gyro data (rad/s)
+// tandem-sils: HIL_SENSOR gyro 데이터 
 bool AP_HIL::get_hil_sensor_gyro(Vector3f& out_gyro) const
 {
     if (!is_enabled()) {
@@ -210,7 +207,7 @@ bool AP_HIL::get_hil_sensor_gyro(Vector3f& out_gyro) const
     return true;
 }
 
-// tandem-sils: HIL_SENSOR accel data (m/s^2)
+// tandem-sils: HIL_SENSOR accel 데이터
 bool AP_HIL::get_hil_sensor_accel(Vector3f& out_accel) const
 {
     if (!is_enabled()) {
@@ -222,7 +219,7 @@ bool AP_HIL::get_hil_sensor_accel(Vector3f& out_accel) const
     return true;
 }
 
-// tandem-sils: HIL_SENSOR mag data (gauss)
+// tandem-sils: HIL_SENSOR mag 데이터
 bool AP_HIL::get_hil_sensor_mag(Vector3f& out_mag) const
 {
     if (!is_enabled()) {
@@ -259,7 +256,7 @@ bool AP_HIL::get_hil_sensor_data(float* abs_pressure, float* diff_pressure, floa
     return true;
 }
 
-// tandem-sils: HIL altitude in mm (private helper)
+// tandem-sils: HIL altitude (private helper)
 bool AP_HIL::get_hil_location_alt_mm(int32_t &alt_mm) const
 {
     if (!is_enabled()) {
