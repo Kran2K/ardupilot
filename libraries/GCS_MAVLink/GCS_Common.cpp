@@ -1158,6 +1158,7 @@ ap_message GCS_MAVLINK::mavlink_id_to_ap_message_id(const uint32_t mavlink_id) c
 #if AP_AIRSPEED_ENABLED
         { MAVLINK_MSG_ID_AIRSPEED, MSG_AIRSPEED},
 #endif
+        { MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS, MSG_HIL_ACTUATOR_CONTROLS},
             };
 
     for (uint8_t i=0; i<ARRAY_SIZE(map); i++) {
@@ -3423,6 +3424,26 @@ void GCS_MAVLINK::send_servo_output_raw()
                 values[28], values[29], values[30], values[31]);
     }
 #endif
+}
+
+void GCS_MAVLINK::send_hil_actuator_control()
+{
+    CHECK_PAYLOAD_SIZE2_VOID(chan, HIL_ACTUATOR_CONTROLS);
+
+    float controls[16] {};
+    // Populate controls from SRV_Channels functions
+    controls[0] = SRV_Channels::get_output_norm(SRV_Channel::k_aileron);
+    controls[1] = SRV_Channels::get_output_norm(SRV_Channel::k_elevator);
+    controls[2] = SRV_Channels::get_output_norm(SRV_Channel::k_rudder);
+    controls[3] = SRV_Channels::get_output_norm(SRV_Channel::k_throttle);
+
+    mavlink_msg_hil_actuator_controls_send(
+        chan,
+        AP_HAL::micros64(),
+        controls,
+        0, // mode
+        0  // flags
+    );
 }
 
 
@@ -6614,6 +6635,11 @@ bool GCS_MAVLINK::try_send_message(const enum ap_message id)
         break;
 #endif
 
+    case MSG_HIL_ACTUATOR_CONTROLS:
+        CHECK_PAYLOAD_SIZE(HIL_ACTUATOR_CONTROLS);
+        send_hil_actuator_control();
+        break;
+
     default:
         // try_send_message must always at some stage return true for
         // a message, or we will attempt to infinitely retry the
@@ -6850,6 +6876,7 @@ void GCS_MAVLINK::initialise_message_intervals_from_streamrates()
 #else
     set_mavlink_message_id_interval(MAVLINK_MSG_ID_HEARTBEAT, 1000);
 #endif
+    set_ap_message_interval(MSG_HIL_ACTUATOR_CONTROLS, 10);
 }
 
 bool GCS_MAVLINK::get_default_interval_for_ap_message(const ap_message id, uint16_t &interval) const
