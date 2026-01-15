@@ -68,6 +68,7 @@
 #include <AP_LandingGear/AP_LandingGear.h>
 #include <AP_Landing/AP_Landing_config.h>
 #include <AP_HIL/AP_HIL.h>
+#include <AP_Motors/AP_Motors.h>
 
 #include "MissionItemProtocol_Waypoints.h"
 #include "MissionItemProtocol_Rally.h"
@@ -3431,12 +3432,22 @@ void GCS_MAVLINK::send_hil_actuator_control()
     CHECK_PAYLOAD_SIZE2_VOID(chan, HIL_ACTUATOR_CONTROLS);
 
     float controls[16] {};
-    // Populate controls from SRV_Channels functions
-    controls[0] = SRV_Channels::get_output_norm(SRV_Channel::k_aileron);
-    controls[1] = SRV_Channels::get_output_norm(SRV_Channel::k_elevator);
-    controls[2] = SRV_Channels::get_output_norm(SRV_Channel::k_rudder);
-    controls[3] = SRV_Channels::get_output_norm(SRV_Channel::k_throttle);
 
+    AP_Motors *motors = AP::motors();
+
+    if (motors != nullptr) {
+        controls[0] = constrain_float(motors->get_roll(), -1.0f, 1.0f);
+        controls[1] = constrain_float(motors->get_pitch(), -1.0f, 1.0f);
+        controls[2] = constrain_float(motors->get_yaw(), -1.0f, 1.0f);
+        controls[3] = constrain_float(motors->get_throttle(), 0.0f, 1.0f);
+    } else {
+        controls[0] = 0.0f;
+        controls[1] = 0.0f;
+        controls[2] = 0.0f;
+        controls[3] = 0.0f;
+    }
+
+    // MAVLink 메시지 전송
     mavlink_msg_hil_actuator_controls_send(
         chan,
         AP_HAL::micros64(),
