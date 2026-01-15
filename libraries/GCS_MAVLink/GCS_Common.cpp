@@ -2324,8 +2324,8 @@ void GCS_MAVLINK::send_scaled_imu(uint8_t instance, void (*send_fn)(mavlink_chan
     }
 #endif
 
-    // tandem-sils: instance 0, 1을 HIL_SENSOR 데이터로 강제 오버라이드 (SCALED_IMU, SCALED_IMU2)
-    if (instance <= 1) {
+    // tandem-sils: instance 0, 1, 2을 HIL_SENSOR 데이터로 강제 오버라이드 (SCALED_IMU, SCALED_IMU2)
+    if (instance <= 2) {
         auto *hil = AP::hil();
         if (hil != nullptr && hil->is_enabled()) {
             Vector3f hil_sensor_accel, hil_sensor_gyro, hil_sensor_mag;
@@ -2383,7 +2383,7 @@ void GCS_MAVLINK::send_scaled_pressure_instance(uint8_t instance, void (*send_fn
 {
     // Force use of HIL_SENSOR pressure data when HIL enabled
     auto *hil_ptr = AP::hil();
-    if (hil_ptr && hil_ptr->is_enabled() && instance == 0) {
+    if (hil_ptr && hil_ptr->is_enabled() && instance <= 1) {
         float hil_abs_pressure = 0.0f;
         float hil_diff_pressure = 0.0f;
         float hil_temperature = 0.0f;
