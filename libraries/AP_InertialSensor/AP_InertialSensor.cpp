@@ -1913,16 +1913,20 @@ void AP_InertialSensor::update_HIL_override()
 
     Vector3f gyro;
     if (hil->get_hil_sensor_gyro(gyro)) {
-        _gyro[0] = gyro;
-        _gyro_healthy[0] = true;
-        _new_gyro_data[0] = true;
+        for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+            _gyro[i] = gyro;
+            _gyro_healthy[i] = true;
+            _new_gyro_data[i] = true;
+        }
     }
 
     Vector3f accel;
     if (hil->get_hil_sensor_accel(accel)) {
-        _accel[0] = accel;
-        _accel_healthy[0] = true;
-        _new_accel_data[0] = true;
+        for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+            _accel[i] = accel;
+            _accel_healthy[i] = true;
+            _new_accel_data[i] = true;
+        }
     }
 }
 
