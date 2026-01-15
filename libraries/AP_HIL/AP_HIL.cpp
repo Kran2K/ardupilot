@@ -79,9 +79,9 @@ void AP_HIL::handle_hil_state_quaternion(const mavlink_message_t &msg)
     _nav_state.gyro = Vector3f(packet.rollspeed, packet.pitchspeed, packet.yawspeed);
 
     // tandem-sils: lat, lon, alt 데이터 수신
-    _nav_state.loc.lat = packet.lat*1e7;
-    _nav_state.loc.lng = packet.lon*1e7;
-    _nav_state.loc.alt = packet.alt*100; // mm -> cm
+    _nav_state.loc.lat = packet.lat;
+    _nav_state.loc.lng = packet.lon;
+    _nav_state.loc.alt = packet.alt * 100;
     //_nav_state.loc.relative_alt = 0;
     //_nav_state.loc.terrain_alt = 0;
 
