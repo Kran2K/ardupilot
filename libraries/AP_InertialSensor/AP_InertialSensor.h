@@ -203,6 +203,9 @@ public:
     // update gyro and accel values from accumulated samples
     void update(void) __RAMFUNC__;
 
+    // update HIL override
+    void update_HIL_override(void);
+
     // wait for a sample to be available
     void wait_for_sample(void) __RAMFUNC__;
 

@@ -14,6 +14,7 @@
 #include <AP_BoardConfig/AP_BoardConfig.h>
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_AHRS/AP_AHRS_View.h>
+#include <AP_HIL/AP_HIL.h>
 #include <AP_ExternalAHRS/AP_ExternalAHRS.h>
 #include <AP_GyroFFT/AP_GyroFFT.h>
 #include <AP_Vehicle/AP_Vehicle_Type.h>
@@ -1903,6 +1904,28 @@ void AP_InertialSensor::HarmonicNotch::update_params(uint8_t instance, bool conv
 }
 #endif
 
+void AP_InertialSensor::update_HIL_override()
+{
+    const AP_HIL *hil = AP::hil();
+    if (!hil) {
+        return;
+    }
+
+    Vector3f gyro;
+    if (hil->get_hil_sensor_gyro(gyro)) {
+        _gyro[0] = gyro;
+        _gyro_healthy[0] = true;
+        _new_gyro_data[0] = true;
+    }
+
+    Vector3f accel;
+    if (hil->get_hil_sensor_accel(accel)) {
+        _accel[0] = accel;
+        _accel_healthy[0] = true;
+        _new_accel_data[0] = true;
+    }
+}
+
 /*
   update gyro and accel values from backends
  */
@@ -1988,6 +2011,9 @@ void AP_InertialSensor::update(void)
     _last_update_usec = AP_HAL::micros();
     
     _have_sample = false;
+
+    // Tandem : 외부 센서 데이터 덮어쓰기
+    update_HIL_override();
 
 #if HAL_INS_TEMPERATURE_CAL_ENABLE
     if (tcal_learning && !temperature_cal_running()) {
