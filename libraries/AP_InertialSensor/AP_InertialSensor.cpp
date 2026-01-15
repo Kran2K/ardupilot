@@ -1911,11 +1911,18 @@ void AP_InertialSensor::update_HIL_override()
         return;
     }
 
+    float dt = get_delta_time();
+
     Vector3f gyro;
     if (hil->get_hil_sensor_gyro(gyro)) {
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
             _gyro[i] = gyro;
             _gyro_healthy[i] = true;
+            
+            _delta_angle[i] = gyro * dt;
+            _delta_angle_dt[i] = dt;
+            _delta_angle_valid[i] = true;
+            
             _new_gyro_data[i] = true;
         }
     }
@@ -1925,7 +1932,22 @@ void AP_InertialSensor::update_HIL_override()
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
             _accel[i] = accel;
             _accel_healthy[i] = true;
+            
+            _delta_velocity[i] = accel * dt;
+            _delta_velocity_dt[i] = dt;
+            _delta_velocity_valid[i] = true;
+
+            _delta_velocity_acc[i].zero();
+            _delta_velocity_acc_dt[i] = 0;
+
             _new_accel_data[i] = true;
+        }
+    }
+
+    float press, temp;
+    if (hil->get_hil_sensor_baro(press, temp)) {
+        for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
+            _temperature[i] = temp;
         }
     }
 }

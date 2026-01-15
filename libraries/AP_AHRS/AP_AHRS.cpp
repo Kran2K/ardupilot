@@ -484,11 +484,11 @@ void AP_AHRS::update(bool skip_ins_update)
     }
 #endif // HAL_GCS_ENABLED
 
-    // update published state
-    update_state();
-
     // Tandem : 외부 항법해 덮어쓰기
     update_HIL_override();
+
+    // update published state
+    update_state();
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     /*
       add timing jitter to simulate slow EKF response
