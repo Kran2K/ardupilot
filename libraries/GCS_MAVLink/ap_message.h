@@ -104,5 +104,11 @@ enum ap_message : uint8_t {
 #endif
     MSG_AIRSPEED,
     MSG_HIL_ACTUATOR_CONTROLS,
+    MSG_ENGINE_STATUS_A,
+    MSG_ENGINE_STATUS_B,
+    MSG_ENGINE_STATUS_C,
+    MSG_FLCC_OPERATION,
+    MSG_SERVOMOTOR_STATUS,
+    MSG_DEVICE_STATUS,
     MSG_LAST // MSG_LAST must be the last entry in this enum
 };

@@ -345,6 +345,75 @@ bool GCS_MAVLINK_Copter::try_send_message(enum ap_message id)
 {
     switch(id) {
 
+    case MSG_ENGINE_STATUS_A: {
+        mavlink_msg_engine_status_a_send(
+            chan,
+            gcs().eng_telemetry_a.engine_rpm,
+            gcs().eng_telemetry_a.rotor_rpm,
+            gcs().eng_telemetry_a.booster_pressure,
+            gcs().eng_telemetry_a.engine_oil_pressure,
+            gcs().eng_telemetry_a.engine_power
+        );
+        break;
+    }
+    case MSG_ENGINE_STATUS_B: {
+        mavlink_msg_engine_status_b_send(
+            chan,
+            gcs().eng_telemetry_b.fuel_level,
+            gcs().eng_telemetry_b.coolant_temperature,
+            gcs().eng_telemetry_b.fuel_consumption,
+            gcs().eng_telemetry_b.alternator_volts
+        );
+        break;
+    }
+    case MSG_ENGINE_STATUS_C: {
+        mavlink_msg_engine_status_c_send(
+            chan,
+            gcs().eng_telemetry_c.engine_error_count,
+            gcs().eng_telemetry_c.engine_dtc_code1,
+            gcs().eng_telemetry_c.engine_dtc_code2,
+            gcs().eng_telemetry_c.engine_dtc_code3,
+            gcs().eng_telemetry_c.engine_dtc_code4,
+            gcs().eng_telemetry_c.engine_dtc_code5
+        );
+        break;
+    }
+    case MSG_FLCC_OPERATION: {
+        mavlink_msg_flcc_operation_send(
+            chan,
+            gcs().flcc_op.FLCC_op_mode,
+            gcs().flcc_op.FLCC_status
+        );
+        break;
+    }
+    case MSG_SERVOMOTOR_STATUS: {
+        mavlink_msg_servomotor_status_send(
+            chan,
+            gcs().servo_status.servo_motor[0],
+            gcs().servo_status.servo_motor[1],
+            gcs().servo_status.servo_motor[2],
+            gcs().servo_status.servo_motor[3],
+            gcs().servo_status.servo_motor[4],
+            gcs().servo_status.servo_motor[5],
+            gcs().servo_status.servo_motor[6],
+            gcs().servo_status.servo_motor[7]
+        );
+        break;
+    }
+    case MSG_DEVICE_STATUS: {
+        mavlink_msg_device_status_send(
+            chan,
+            gcs().device_stat.oilpump_front_status,
+            gcs().device_stat.oilpump_rear_status,
+            gcs().device_stat.actuator_status,
+            gcs().device_stat.radiator_fan_status,
+            gcs().device_stat.intercooler_fan_status,
+            gcs().device_stat.IG1_feedback_status,
+            gcs().device_stat.lamp_status
+        );
+        break;
+    }
+
 #if AP_TERRAIN_AVAILABLE
     case MSG_TERRAIN_REQUEST:
         CHECK_PAYLOAD_SIZE(TERRAIN_REQUEST);
@@ -590,6 +659,12 @@ static const ap_message STREAM_EXTRA3_msgs[] = {
 #if HAL_EFI_ENABLED
     MSG_EFI_STATUS,
 #endif
+    MSG_ENGINE_STATUS_A,
+    MSG_ENGINE_STATUS_B,
+    MSG_ENGINE_STATUS_C,
+    MSG_FLCC_OPERATION,
+    MSG_SERVOMOTOR_STATUS,
+    MSG_DEVICE_STATUS,
 };
 static const ap_message STREAM_PARAMS_msgs[] = {
     MSG_NEXT_PARAM

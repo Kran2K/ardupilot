@@ -184,6 +184,49 @@ private:
     static uint32_t last_check_ms;
 };
 
+struct EngineTelemetryA {
+    uint32_t engine_rpm;
+    uint32_t rotor_rpm;
+    uint16_t booster_pressure;
+    uint16_t engine_oil_pressure;
+    uint32_t engine_power;
+};
+
+struct EngineTelemetryB {
+    uint8_t fuel_level;
+    uint8_t coolant_temperature;
+    uint16_t fuel_consumption;
+    uint8_t alternator_volts;
+};
+
+struct EngineTelemetryC {
+    uint8_t engine_error_count;
+    uint16_t engine_dtc_code1;
+    uint16_t engine_dtc_code2;
+    uint16_t engine_dtc_code3;
+    uint16_t engine_dtc_code4;
+    uint16_t engine_dtc_code5;
+};
+
+struct FLCC_Operation {
+    uint8_t FLCC_op_mode;
+    uint8_t FLCC_status;
+};
+
+struct ServoMotorStatus {
+    uint16_t servo_motor[8];
+};
+
+struct DeviceStatus {
+    uint8_t oilpump_front_status;
+    uint8_t oilpump_rear_status;
+    uint8_t actuator_status;
+    uint8_t radiator_fan_status;
+    uint8_t intercooler_fan_status;
+    uint8_t IG1_feedback_status;
+    uint8_t lamp_status;
+};
+
 ///
 /// @class	GCS_MAVLINK
 /// @brief	MAVLink transport control class
@@ -1205,6 +1248,21 @@ public:
     void send_parameter_value(const char *param_name,
                               ap_var_type param_type,
                               float param_value);
+
+    // custom telemetry setters for scripting bridge
+    void set_engine_status_a(uint32_t engine_rpm, uint32_t rotor_rpm, uint16_t booster_pressure, uint16_t engine_oil_pressure, uint32_t engine_power);
+    void set_engine_status_b(uint8_t fuel_level, uint8_t coolant_temperature, uint16_t fuel_consumption, uint8_t alternator_volts);
+    void set_engine_status_c(uint8_t engine_error_count, uint16_t dtc1, uint16_t dtc2, uint16_t dtc3, uint16_t dtc4, uint16_t dtc5);
+    void set_flcc_operation(uint8_t mode, uint8_t status);
+    void set_servomotor_status(uint16_t s1, uint16_t s2, uint16_t s3, uint16_t s4, uint16_t s5, uint16_t s6, uint16_t s7, uint16_t s8);
+    void set_device_status(uint8_t op_f, uint8_t op_r, uint8_t act, uint8_t rfan, uint8_t ifan, uint8_t ig1, uint8_t lamp);
+
+    EngineTelemetryA eng_telemetry_a;
+    EngineTelemetryB eng_telemetry_b;
+    EngineTelemetryC eng_telemetry_c;
+    FLCC_Operation flcc_op;
+    ServoMotorStatus servo_status;
+    DeviceStatus device_stat;
 
     // an array of objects used to handle each of the different
     // protocol types we support.  This is indexed by the enumeration

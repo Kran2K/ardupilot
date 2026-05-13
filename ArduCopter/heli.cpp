@@ -1,4 +1,5 @@
 #include "Copter.h"
+#include "GCS_MAVLink/GCS.h"
 
 // Traditional helicopter variables and functions
 

@@ -7396,4 +7396,54 @@ void GCS_MAVLINK::handle_radio_rc_channels(const mavlink_message_t &msg)
 }
 #endif // AP_RCPROTOCOL_MAVLINK_RADIO_ENABLED
 
+void GCS::set_engine_status_a(uint32_t engine_rpm, uint32_t rotor_rpm, uint16_t booster_pressure, uint16_t engine_oil_pressure, uint32_t engine_power) {
+    eng_telemetry_a.engine_rpm = engine_rpm;
+    eng_telemetry_a.rotor_rpm = rotor_rpm;
+    eng_telemetry_a.booster_pressure = booster_pressure;
+    eng_telemetry_a.engine_oil_pressure = engine_oil_pressure;
+    eng_telemetry_a.engine_power = engine_power;
+}
+
+void GCS::set_engine_status_b(uint8_t fuel_level, uint8_t coolant_temperature, uint16_t fuel_consumption, uint8_t alternator_volts) {
+    eng_telemetry_b.fuel_level = fuel_level;
+    eng_telemetry_b.coolant_temperature = coolant_temperature;
+    eng_telemetry_b.fuel_consumption = fuel_consumption;
+    eng_telemetry_b.alternator_volts = alternator_volts;
+}
+
+void GCS::set_engine_status_c(uint8_t engine_error_count, uint16_t dtc1, uint16_t dtc2, uint16_t dtc3, uint16_t dtc4, uint16_t dtc5) {
+    eng_telemetry_c.engine_error_count = engine_error_count;
+    eng_telemetry_c.engine_dtc_code1 = dtc1;
+    eng_telemetry_c.engine_dtc_code2 = dtc2;
+    eng_telemetry_c.engine_dtc_code3 = dtc3;
+    eng_telemetry_c.engine_dtc_code4 = dtc4;
+    eng_telemetry_c.engine_dtc_code5 = dtc5;
+}
+
+void GCS::set_flcc_operation(uint8_t mode, uint8_t status) {
+    flcc_op.FLCC_op_mode = mode;
+    flcc_op.FLCC_status = status;
+}
+
+void GCS::set_servomotor_status(uint16_t s1, uint16_t s2, uint16_t s3, uint16_t s4, uint16_t s5, uint16_t s6, uint16_t s7, uint16_t s8) {
+    servo_status.servo_motor[0] = s1;
+    servo_status.servo_motor[1] = s2;
+    servo_status.servo_motor[2] = s3;
+    servo_status.servo_motor[3] = s4;
+    servo_status.servo_motor[4] = s5;
+    servo_status.servo_motor[5] = s6;
+    servo_status.servo_motor[6] = s7;
+    servo_status.servo_motor[7] = s8;
+}
+
+void GCS::set_device_status(uint8_t op_f, uint8_t op_r, uint8_t act, uint8_t rfan, uint8_t ifan, uint8_t ig1, uint8_t lamp) {
+    device_stat.oilpump_front_status = op_f;
+    device_stat.oilpump_rear_status = op_r;
+    device_stat.actuator_status = act;
+    device_stat.radiator_fan_status = rfan;
+    device_stat.intercooler_fan_status = ifan;
+    device_stat.IG1_feedback_status = ig1;
+    device_stat.lamp_status = lamp;
+}
+
 #endif  // HAL_GCS_ENABLED
